@@ -133,6 +133,9 @@ int		fdtbus_register_reset_controller(device_t, int,
 		    const struct fdtbus_reset_controller_func *);
 
 int		fdtbus_get_reg(int, u_int, bus_addr_t *, bus_size_t *);
+int		fdtbus_get_nregs(int);
+int		fdtbus_map_reg(int, u_int, bus_space_tag_t, int,
+		    bus_space_handle_t *);
 int		fdtbus_get_phandle(int, const char *);
 int		fdtbus_get_phandle_from_native(int);
 i2c_tag_t	fdtbus_get_i2c_tag(int);

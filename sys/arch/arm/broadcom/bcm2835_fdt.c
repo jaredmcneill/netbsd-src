@@ -1,7 +1,7 @@
-/* $NetBSD: clk_backend.h,v 1.1 2015/12/05 13:31:07 jmcneill Exp $ */
+/* $NetBSD$ */
 
 /*-
- * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2016 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,32 +26,64 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _DEV_CLK_CLK_BACKEND_H
-#define _DEV_CLK_CLK_BACKEND_H
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD$");
 
-#include <dev/clk/clk.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
 
-struct clk_backend;
+#include <machine/cpu.h>
+#include <sys/bus.h>
 
-struct clk {
-	struct clk_backend *cb;
-        const char *name;
-        u_int flags;
-#define CLK_SET_RATE_PARENT     0x01
-};
+#include <arm/mainbus/mainbus.h>
+#include <arm/broadcom/bcm2835var.h>
 
-struct clk_funcs {
-	struct clk *(*get)(void *, const char *);
-	void (*put)(void *, struct clk *);
+#include <dev/fdt/fdtvar.h>
+#include <dev/ofw/openfirm.h>
 
-	u_int (*get_rate)(void *, struct clk *);
-	int (*set_rate)(void *, struct clk *, u_int);
-	int (*enable)(void *, struct clk *);
-	int (*disable)(void *, struct clk *);
-	int (*set_parent)(void *, struct clk *, struct clk *);
-	struct clk *(*get_parent)(void *, struct clk *);
-};
+static int	bcmfdt_match(device_t, cfdata_t, void *);
+static void	bcmfdt_attach(device_t, device_t, void *);
 
-int	clk_backend_register(device_t, const struct clk_funcs *, void *);
+CFATTACH_DECL_NEW(bcmfdt, 0,
+    bcmfdt_match, bcmfdt_attach, NULL, NULL);
 
-#endif /* _DEV_CLK_CLK_BACKEND_H */
+static bool bcmfdt_found = false;
+
+int
+bcmfdt_match(device_t parent, cfdata_t cf, void *aux)
+{
+	if (bcmfdt_found)
+		return 0;
+	return 1;
+}
+
+void
+bcmfdt_attach(device_t parent, device_t self, void *aux)
+{
+	const char *bcmfdt_init[] = {
+		"interrupt-controller",
+		"gpio",
+		"clocks",
+		"mailbox",
+		"firmware",
+		"power",
+		"dma"
+	};
+
+	bcmfdt_found = true;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	struct fdt_attach_args faa = {
+		.faa_name = "",
+		.faa_bst = &bcm2835_bs_tag,
+		.faa_a4x_bst = &bcm2835_a4x_bs_tag,
+		.faa_dmat = &bcm2835_bus_dma_tag,
+		.faa_phandle = OF_peer(0),
+		.faa_init = bcmfdt_init,
+		.faa_ninit = __arraycount(bcmfdt_init)
+	};
+	config_found(self, &faa, NULL);
+}

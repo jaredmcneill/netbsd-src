@@ -192,7 +192,7 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	pll_p_out0 = clk_get("pll_p_out0");
+	pll_p_out0 = clk_get(NULL, "pll_p_out0");
 	if (pll_p_out0 == NULL) {
 		aprint_error_dev(self, "couldn't get clock pll_p_out0\n");
 		return;

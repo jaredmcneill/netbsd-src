@@ -8,6 +8,7 @@ include 	"arch/evbarm/conf/std.evbarm"
 # Pull in Raspberry Pi config definitions.
 include		"arch/evbarm/conf/files.rpi"
 
+options 	FDT
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
 options 	FPU_VFP

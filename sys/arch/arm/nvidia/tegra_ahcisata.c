@@ -287,7 +287,7 @@ tegra_ahcisata_init_clocks(struct tegra_ahcisata_softc *sc)
 	struct clk *pll_p_out0;
 	int error;
 
-	pll_p_out0 = clk_get("pll_p_out0");
+	pll_p_out0 = clk_get(NULL, "pll_p_out0");
 	if (pll_p_out0 == NULL) {
 		aprint_error_dev(self, "couldn't find pll_p_out0\n");
 		return ENOENT;

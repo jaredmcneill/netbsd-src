@@ -679,7 +679,7 @@ tegra124_car_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": CAR\n");
 
-	clk_backend_register("tegra124", &tegra124_car_clock_funcs, sc);
+	clk_backend_register(self, &tegra124_car_clock_funcs, sc);
 
 	fdtbus_register_clock_controller(self, phandle,
 	    &tegra124_car_fdtclock_funcs);

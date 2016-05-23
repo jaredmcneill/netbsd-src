@@ -346,7 +346,7 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 	tegra_pmc_remove_clamping(pmc_partid);
 
 	/* Set parent clock */
-	clk_parent = clk_get("pll_d2_out0");
+	clk_parent = clk_get(NULL, "pll_d2_out0");
 	if (clk_parent == NULL) {
 		DRM_ERROR("couldn't find pll_d2_out0\n");
 		return -EIO;

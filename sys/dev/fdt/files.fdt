@@ -22,6 +22,10 @@ device	gpiokeys
 attach	gpiokeys at fdt
 file	dev/fdt/gpiokeys.c			gpiokeys
 
+device	fixedclk
+attach	fixedclk at fdt
+file	dev/fdt/fixedclock.c			fixedclk
+
 file	dev/fdt/fdt_openfirm.c			fdtbus
 file	dev/fdt/fdt_subr.c			fdtbus
 file	dev/fdt/fdt_clock.c			fdtbus

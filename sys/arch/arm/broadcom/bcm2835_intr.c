@@ -49,9 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.11 2015/08/01 14:18:00 skrll Exp 
 #include <arm/pic/picvar.h>
 #include <arm/cortex/gtmr_var.h>
 
-#include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm2835var.h>
+
+#include <dev/fdt/fdtvar.h>
 
 static void bcm2835_pic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
 static void bcm2835_pic_block_irqs(struct pic_softc *, size_t, uint32_t);
@@ -72,6 +73,20 @@ int bcm2836mp_ipi_handler(void *);
 static void bcm2836mp_cpu_init(struct pic_softc *, struct cpu_info *);
 static void bcm2836mp_send_ipi(struct pic_softc *, const kcpuset_t *, u_long);
 #endif
+#endif
+
+static int bcm2835_icu_fdt_decode_irq(u_int *);
+static void *bcm2835_icu_fdt_establish(device_t, u_int *, int, int,
+    int (*)(void *), void *);
+static void bcm2835_icu_fdt_disestablish(device_t, void *);
+static bool bcm2835_icu_fdt_intrstr(device_t, u_int *, char *, size_t);
+
+#if defined(BCM2836)
+static int bcm2836mp_icu_fdt_decode_irq(u_int *);
+static void *bcm2836mp_icu_fdt_establish(device_t, u_int *, int, int,
+    int (*)(void *), void *);
+static void bcm2836mp_icu_fdt_disestablish(device_t, void *);
+static bool bcm2836mp_icu_fdt_intrstr(device_t, u_int *, char *, size_t);
 #endif
 
 static int  bcm2835_icu_match(device_t, cfdata_t, void *);
@@ -128,11 +143,24 @@ struct pic_softc bcm2836mp_pic[BCM2836_NCPUS] = {
 };
 #endif
 
+static struct fdtbus_interrupt_controller_func bcm2835icu_fdt_funcs = {
+	.establish = bcm2835_icu_fdt_establish,
+	.disestablish = bcm2835_icu_fdt_disestablish,
+	.intrstr = bcm2835_icu_fdt_intrstr
+};
+
+#if defined(BCM2836)
+static struct fdtbus_interrupt_controller_func bcm2836mpicu_fdt_funcs = {
+	.establish = bcm2836mp_icu_fdt_establish,
+	.disestablish = bcm2836mp_icu_fdt_disestablish,
+	.intrstr = bcm2836mp_icu_fdt_intrstr
+};
+#endif
+
 struct bcm2835icu_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	struct pic_softc	*sc_pic;
 };
 
 struct bcm2835icu_softc *bcmicu_sc;
@@ -190,42 +218,76 @@ CFATTACH_DECL_NEW(bcmicu, sizeof(struct bcm2835icu_softc),
 static int
 bcm2835_icu_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct amba_attach_args *aaa = aux;
+	const char * const compatible[] = {
+	    "brcm,bcm2708-armctrl-ic",
+#if defined(BCM2836)
+	    "brcm,bcm2836-l1-intc",
+#endif
+	    NULL
+	};
+	struct fdt_attach_args * const faa = aux;
 
-	if (strcmp(aaa->aaa_name, "icu") != 0)
-		return 0;
-
-	return 1;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 bcm2835_icu_attach(device_t parent, device_t self, void *aux)
 {
 	struct bcm2835icu_softc *sc = device_private(self);
-	struct amba_attach_args *aaa = aux;
+	struct fdtbus_interrupt_controller_func *ifuncs;
+	struct fdt_attach_args * const faa = aux;
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
 
-	sc->sc_dev = self;
-	sc->sc_iot = aaa->aaa_iot;
-	sc->sc_pic = &bcm2835_pic;
-
-	if (bus_space_map(aaa->aaa_iot, aaa->aaa_addr, aaa->aaa_size, 0,
-	    &sc->sc_ioh)) {
-		aprint_error_dev(self, "unable to map device\n");
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
 		return;
 	}
 
-	bcmicu_sc = sc;
+	sc->sc_dev = self;
+	sc->sc_iot = faa->faa_bst;
+
+	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh) != 0) {
+		aprint_error(": couldn't map device\n");
+		return;
+	}
 
 #if defined(BCM2836)
+	const char * const local_intc[] = { "brcm,bcm2836-l1-intc", NULL };
+	if (of_match_compatible(faa->faa_phandle, local_intc)) {
 #if defined(MULTIPROCESSOR)
-	aprint_normal(": Multiprocessor");
+		aprint_normal(": Multiprocessor");
 #endif
 
-	bcm2836mp_intr_init(curcpu());
+		/* XXX */
+		al_ioh = sc->sc_ioh;
+
+		bus_space_write_4(al_iot, al_ioh, BCM2836_LOCAL_CONTROL, 0);
+		bus_space_write_4(al_iot, al_ioh, BCM2836_LOCAL_PRESCALER,
+		    0x80000000);
+
+		bcm2836mp_intr_init(curcpu());
+		ifuncs = &bcm2836mpicu_fdt_funcs;
+	} else {
 #endif
-	pic_add(sc->sc_pic, BCM2835_INT_BASE);
+		bcmicu_sc = sc;
+		pic_add(&bcm2835_pic, BCM2835_INT_BASE);
+		ifuncs = &bcm2835icu_fdt_funcs;
+#if defined(BCM2836)
+	}
+#endif
+
+	error = fdtbus_register_interrupt_controller(self, faa->faa_phandle,
+	    ifuncs);
+	if (error != 0) {
+		aprint_error(": couldn't register with fdtbus: %d\n", error);
+		return;
+	}
 
 	aprint_normal("\n");
+
+	
 }
 
 void
@@ -330,6 +392,69 @@ bcm2835_pic_source_name(struct pic_softc *pic, int irq, char *buf, size_t len)
 	strlcpy(buf, bcm2835_sources[irq], len);
 }
 
+static int
+bcm2835_icu_fdt_decode_irq(u_int *specifier)
+{
+	u_int base;
+
+	if (!specifier)
+		return -1;
+
+	/* 1st cell is the bank number. 0 = ARM, 1 = GPU0, 2 = GPU1 */
+	/* 2nd cell is the irq relative to that bank */
+
+	const u_int bank = be32toh(specifier[0]);
+	switch (bank) {
+	case 0:
+		base = BCM2835_INT_BASICBASE;
+		break;
+	case 1:
+		base = BCM2835_INT_GPU0BASE;
+		break;
+	case 2:
+		base = BCM2835_INT_GPU1BASE;
+		break;
+	default:
+		return -1;
+	}
+	const u_int off = be32toh(specifier[1]);
+
+	return base + off;
+}
+
+static void *
+bcm2835_icu_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
+    int (*func)(void *), void *arg)
+{
+	int iflags = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
+	int irq;
+
+	irq = bcm2835_icu_fdt_decode_irq(specifier);
+	if (irq == -1)
+		return NULL;
+
+	return intr_establish(irq, ipl, IST_LEVEL | iflags, func, arg);
+}
+
+static void
+bcm2835_icu_fdt_disestablish(device_t dev, void *ih)
+{
+	intr_disestablish(ih);
+}
+
+static bool
+bcm2835_icu_fdt_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
+{
+	int irq;
+
+	irq = bcm2835_icu_fdt_decode_irq(specifier);
+	if (irq == -1)
+		return false;
+
+	snprintf(buf, buflen, "intc irq %d", irq);
+
+	return true;
+}
 
 #if defined(BCM2836)
 
@@ -544,5 +669,48 @@ bcm2836mp_intr_init(struct cpu_info *ci)
 
 }
 #endif
+
+static int
+bcm2836mp_icu_fdt_decode_irq(u_int *specifier)
+{
+	if (!specifier)
+		return -1;
+	return be32toh(specifier[0]) + BCM2836_INT_LOCALBASE;
+}
+
+static void *
+bcm2836mp_icu_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
+    int (*func)(void *), void *arg)
+{
+	int iflags = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
+	int irq;
+
+	irq = bcm2836mp_icu_fdt_decode_irq(specifier);
+	if (irq == -1)
+		return NULL;
+
+	return intr_establish(irq, ipl, IST_LEVEL | iflags, func, arg);
+}
+
+static void
+bcm2836mp_icu_fdt_disestablish(device_t dev, void *ih)
+{
+	intr_disestablish(ih);
+}
+
+static bool
+bcm2836mp_icu_fdt_intrstr(device_t dev, u_int *specifier, char *buf,
+    size_t buflen)
+{
+	int irq;
+
+	irq = bcm2836mp_icu_fdt_decode_irq(specifier);
+	if (irq == -1)
+		return false;
+
+	snprintf(buf, buflen, "local_intc irq %d", irq);
+
+	return true;
+}
 
 #endif

@@ -212,3 +212,37 @@ fdtbus_get_reg(int phandle, u_int index, bus_addr_t *paddr, bus_size_t *psize)
 
 	return 0;
 }
+
+int
+fdtbus_get_nregs(int phandle)
+{
+	const int addr_cells = fdtbus_get_addr_cells(phandle);
+	const int size_cells = fdtbus_get_size_cells(phandle);
+	if (addr_cells == -1 || size_cells == -1)
+		return -1;
+
+	const u_int reglen = size_cells * 4 + addr_cells * 4;
+	if (reglen == 0)
+		return -1;
+
+	const int len = OF_getproplen(phandle, "reg");
+	if (len <= 0)
+		return -1;
+
+	return len / reglen;
+}
+
+int
+fdtbus_map_reg(int phandle, u_int index, bus_space_tag_t t, int flags,
+    bus_space_handle_t *ph)
+{
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
+
+	error = fdtbus_get_reg(phandle, index, &addr, &size);
+	if (error != 0)
+		return error;
+
+	return bus_space_map(t, addr, size, flags, ph);
+}

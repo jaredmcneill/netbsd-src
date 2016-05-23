@@ -230,12 +230,12 @@ tegra_soctherm_init_clocks(struct tegra_soctherm_softc *sc)
 	struct clk *clk_m;
 	int error;
 
-	pll_p_out0 = clk_get("pll_p_out0");
+	pll_p_out0 = clk_get(NULL, "pll_p_out0");
 	if (pll_p_out0 == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't find pll_p_out0\n");
 		return ENOENT;
 	}
-	clk_m = clk_get("clk_m");
+	clk_m = clk_get(NULL, "clk_m");
 	if (clk_m == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't find clk_m\n");
 		return ENOENT;

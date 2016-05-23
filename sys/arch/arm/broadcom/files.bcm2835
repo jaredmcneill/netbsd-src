@@ -23,6 +23,11 @@ file	arch/arm/broadcom/bcm2835_obio.c	obio needs-count
 file	arch/arm/broadcom/bcm2835_space.c	obio
 file	arch/arm/arm/bus_space_a4x.S		obio
 
+# FDT
+device	bcmfdt : bus_space_generic, fdtbus
+attach	bcmfdt at mainbus with bcmfdt
+file	arch/arm/broadcom/bcm2835_fdt.c		bcmfdt
+
 # ARMv7 Generic Timer
 device	armgtmr
 attach	armgtmr at obio
@@ -30,12 +35,12 @@ file	arch/arm/cortex/gtmr.c			armgtmr
 
 # Interrupt Controller (BCM2835_ARMICU_BASE) #, pic_splfuncs
 device	bcmicu: pic, pic_splfuncs
-attach	bcmicu at obio with bcmicu
+attach	bcmicu at fdt with bcmicu
 file	arch/arm/broadcom/bcm2835_intr.c	bcmicu
 
 # VC Mailbox (BCM2835_ARMMBOX_BASE)
 device	bcmmbox: bcmmboxbus
-attach	bcmmbox at obio with bcmmbox
+attach	bcmmbox at fdt with bcmmbox
 file	arch/arm/broadcom/bcm2835_mbox.c	bcmmbox
 
 # System Timer (BCM2835_TIMER_BASE)
@@ -52,10 +57,6 @@ file	arch/arm/broadcom/bcm2835_pm.c		bcmpm
 device	bcmrng
 attach	bcmrng at obio with bcmrng_amba
 file	arch/arm/broadcom/bcm2835_rng.c		bcmrng
-
-# UART Interface (BCM2835_UART0_BASE)
-attach	plcom at obio with bcmplcom
-file	arch/arm/broadcom/bcm2835_plcom.c	bcmplcom
 
 # External Mass Media Controller (BCM2835_EMMC_BASE)
 attach	sdhc at obio with bcmemmc
@@ -98,7 +99,7 @@ file	arch/arm/broadcom/bcm2835_vcaudio.c	vcaudio
 
 # GPIO
 device	bcmgpio: gpiobus
-attach	bcmgpio at obio
+attach	bcmgpio at fdt
 file	arch/arm/broadcom/bcm2835_gpio.c
 
 # Clock Manager (BCM2835_CM_BASE)

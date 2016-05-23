@@ -141,7 +141,7 @@ tegra124_cpuinit(void)
 
 	tegra124_speedo_init();
 
-	tegra124_clk_pllx = clk_get("pll_x");
+	tegra124_clk_pllx = clk_get(NULL, "pll_x");
 	if (tegra124_clk_pllx == NULL) {
 		aprint_error("cpufreq: ERROR: couldn't find pll_x\n");
 		return;

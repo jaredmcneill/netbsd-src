@@ -14,6 +14,11 @@ makeoptions	"COPTS.vcprop_subr.c"+="-fno-stack-protector"
 # Kernel boot arguments
 defparam opt_machdep.h				BOOT_ARGS
 
+# FDT support
+include "dev/ofw/files.ofw"
+include "dev/fdt/files.fdt"
+include "arch/arm/fdt/files.fdt"
+
 # CPU support and integrated peripherals
 include "arch/arm/broadcom/files.bcm2835"
 

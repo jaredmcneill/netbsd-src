@@ -30,44 +30,65 @@
 __KERNEL_RCSID(0, "$NetBSD: clk.c,v 1.1 2015/12/05 13:31:07 jmcneill Exp $");
 
 #include <sys/param.h>
+#include <sys/kmem.h>
 
 #include <dev/clk/clk.h>
 #include <dev/clk/clk_backend.h>
 
-static const char *clk_backend = NULL;
-static const struct clk_funcs *clk_funcs = NULL;
-static void *clk_priv = NULL;
+struct clk_backend {
+	device_t dev;
+	const struct clk_funcs *funcs;
+	void *priv;
+	struct clk_backend *next;
+};
+
+static struct clk_backend *clk_backends = NULL;
 
 int
-clk_backend_register(const char *name, const struct clk_funcs *funcs, void *priv)
+clk_backend_register(device_t dev, const struct clk_funcs *funcs, void *priv)
 {
-	KASSERT(clk_funcs == NULL);
+	struct clk_backend *cb;
 
-	clk_backend = name;
-	clk_funcs = funcs;
-	clk_priv = priv;
+	cb = kmem_zalloc(sizeof(*cb), KM_SLEEP);
+	cb->dev = dev;
+	cb->funcs = funcs;
+	cb->priv = priv;
+	cb->next = clk_backends;
+	clk_backends = cb;
 
 	return 0;
 }
 
 struct clk *
-clk_get(const char *name)
+clk_get(device_t dev, const char *name)
 {
-	if (clk_funcs == NULL)
-		return NULL;
-	return clk_funcs->get(clk_priv, name);
+	struct clk_backend *cb;
+	struct clk *clk;
+
+	for (cb = clk_backends; cb; cb = cb->next) {
+		if (dev == NULL || dev == cb->dev) {
+			clk = cb->funcs->get(cb->priv, name);
+			if (clk != NULL) {
+				KASSERT(clk->cb == NULL || clk->cb == cb);
+				clk->cb = cb;
+				return clk;
+			}
+		}
+	}
+
+	return NULL;
 }
 
 void
 clk_put(struct clk *clk)
 {
-	return clk_funcs->put(clk_priv, clk);
+	return clk->cb->funcs->put(clk->cb->priv, clk);
 }
 
 u_int
 clk_get_rate(struct clk *clk)
 {
-	return clk_funcs->get_rate(clk_priv, clk);
+	return clk->cb->funcs->get_rate(clk->cb->priv, clk);
 }
 
 int
@@ -76,30 +97,30 @@ clk_set_rate(struct clk *clk, u_int rate)
 	if (clk->flags & CLK_SET_RATE_PARENT) {
 		return clk_set_rate(clk_get_parent(clk), rate);
 	} else {
-		return clk_funcs->set_rate(clk_priv, clk, rate);
+		return clk->cb->funcs->set_rate(clk->cb->priv, clk, rate);
 	}
 }
 
 int
 clk_enable(struct clk *clk)
 {
-	return clk_funcs->enable(clk_priv, clk);
+	return clk->cb->funcs->enable(clk->cb->priv, clk);
 }
 
 int
 clk_disable(struct clk *clk)
 {
-	return clk_funcs->disable(clk_priv, clk);
+	return clk->cb->funcs->disable(clk->cb->priv, clk);
 }
 
 int
 clk_set_parent(struct clk *clk, struct clk *parent_clk)
 {
-	return clk_funcs->set_parent(clk_priv, clk, parent_clk);
+	return clk->cb->funcs->set_parent(clk->cb->priv, clk, parent_clk);
 }
 
 struct clk *
 clk_get_parent(struct clk *clk)
 {
-	return clk_funcs->get_parent(clk_priv, clk);
+	return clk->cb->funcs->get_parent(clk->cb->priv, clk);
 }

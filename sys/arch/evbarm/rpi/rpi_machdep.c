@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.68 2016/02/02 13:55:51 skrll Exp $
 #include "opt_ddb.h"
 #include "opt_evbarm_boardtype.h"
 #include "opt_kgdb.h"
+#include "opt_fdt.h"
 #include "opt_rpi.h"
 #include "opt_vcprop.h"
 
@@ -83,6 +84,14 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.68 2016/02/02 13:55:51 skrll Exp $
 #include <evbarm/rpi/rpi.h>
 
 #include <arm/cortex/gtmr_var.h>
+
+#ifdef FDT
+#include <libfdt.h>
+#include <dev/fdt/fdtvar.h>
+#define	FDT_BUF_SIZE	(128*1024)
+static uint8_t fdt_data[FDT_BUF_SIZE];
+extern uint32_t rpi_boot_regs[4];
+#endif
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -610,6 +619,18 @@ initarm(void *arg)
 	cortex_pmc_ccnt_init();
 #endif
 
+#ifdef FDT
+	const uint8_t *fdt_addr_r = (const uint8_t *)rpi_boot_regs[2];
+	int error = fdt_check_header(fdt_addr_r);
+	if (error == 0) {
+		error = fdt_move(fdt_addr_r, fdt_data, sizeof(fdt_data));
+		if (error != 0)
+			panic("fdt_move failed: %s", fdt_strerror(error));
+		fdtbus_set_data(fdt_data);
+	} else
+		panic("fdt_check_header failed: %s", fdt_strerror(error));
+#endif
+
 	rpi_bootparams();
 
 	rpi_bootstrap();
@@ -675,8 +696,14 @@ initarm(void *arg)
 	md_root_setconf(memory_disk, sizeof memory_disk);
 #endif
 
+#ifdef FDT
+	const int chosen = OF_finddevice("/chosen");
+	if (chosen >= 0)
+		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
+#else
 	if (vcprop_tag_success_p(&vb.vbt_cmdline.tag))
 		strlcpy(bootargs, vb.vbt_cmdline.cmdline, sizeof(bootargs));
+#endif
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
 

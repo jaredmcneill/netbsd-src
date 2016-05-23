@@ -51,12 +51,22 @@ cpu*		at mainbus?
 # OBIO
 obio0		at mainbus?
 
+# FDT support
+bcmfdt0		at mainbus?
+fdt0		at bcmfdt?
+simplebus*	at fdt?
+fdt*		at simplebus?
+
+fregulator*	at fdt?
+gpiokeys*	at fdt?
+fixedclk*	at fdt?
+
 # Interrupt Controller
-bcmicu0		at obio?
+bcmicu*		at fdt?
 
 # VC Mailbox
-bcmmbox0	at obio?
-vcmbox0 	at bcmmbox0
+bcmmbox*	at fdt?
+vcmbox* 	at bcmmbox?
 
 # DMA Controller
 bcmdmac0	at obio?
@@ -69,7 +79,7 @@ vcaudio0	at vchiq0
 audio0		at vcaudio0
 
 # PL011 uart
-plcom0		at obio?
+plcom*		at fdt?
 
 # Framebuffer console
 genfb0		at obio?
@@ -87,8 +97,7 @@ bcmpm0		at obio?
 bcmrng0 	at obio?
 
 # GPIO
-bcmgpio0	at obio?	# pins  0 ... 31
-bcmgpio1	at obio?	# pins 32 ... 53
+bcmgpio*	at fdt?
 
 # Arasan SD/MMC Interface
 sdhc* at obio?
@@ -198,6 +207,7 @@ options 	WSDISPLAY_DEFAULTSCREENS=4
 #pseudo-device	pflog			# PF log if
 
 # miscellaneous pseudo-devices
+pseudo-device	openfirm
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

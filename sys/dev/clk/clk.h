@@ -29,9 +29,11 @@
 #ifndef _DEV_CLK_CLK_H
 #define _DEV_CLK_CLK_H
 
+#include <sys/device.h>
+
 struct clk;
 
-struct clk *	clk_get(const char *);
+struct clk *	clk_get(device_t, const char *);
 void		clk_put(struct clk *);
 u_int		clk_get_rate(struct clk *);
 int		clk_set_rate(struct clk *, u_int);

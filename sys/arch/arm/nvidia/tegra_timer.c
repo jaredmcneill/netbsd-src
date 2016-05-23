@@ -96,7 +96,7 @@ tegra_timer_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_clk_watchdog = fdtbus_clock_get(faa->faa_phandle, "watchdog");
 	if (sc->sc_clk_watchdog == NULL)
-		sc->sc_clk_watchdog = clk_get("watchdog");
+		sc->sc_clk_watchdog = clk_get(NULL, "watchdog");
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;

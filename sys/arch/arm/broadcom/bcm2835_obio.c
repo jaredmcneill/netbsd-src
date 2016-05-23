@@ -75,13 +75,6 @@ CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
  * List of port-specific devices to attach to the AMBA AXI bus.
  */
 static const struct ambadev_locators bcm2835_ambadev_locs[] = {
-	{
-		/* Interrupt controller */
-		.ad_name = "icu",
-		.ad_addr = BCM2835_ARMICU_BASE,
-		.ad_size = BCM2835_ARMICU_SIZE,
-		.ad_intr = -1,
-	},
 #if defined(BCM2836)
 	{
 		/* GTMR */
@@ -89,13 +82,6 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_intr = BCM2836_INT_CNTVIRQ_CPUN(0),
 	},
 #endif
-	{
-		/* Mailbox */
-		.ad_name = "bcmmbox",
-		.ad_addr = BCM2835_ARMMBOX_BASE,
-		.ad_size = BCM2835_ARMMBOX_SIZE,
-		.ad_intr = BCM2835_INT_ARMMAILBOX
-	},
 #if !defined(BCM2836)
 	{
 		/* System Timer */
@@ -132,13 +118,6 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_addr = BCM2835_RNG_BASE,
 		.ad_size = BCM2835_RNG_SIZE,
 		.ad_intr = -1,
-	},
-	{
-		/* Uart 0 */
-		.ad_name = "plcom",
-		.ad_addr = BCM2835_UART0_BASE,
-		.ad_size = BCM2835_UART0_SIZE,
-		.ad_intr = BCM2835_INT_UART0,
 	},
 	{
 		/* Framebuffer */
@@ -180,20 +159,6 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_intr = BCM2835_INT_BSC,
 	},
 	{
-		/* gpio */
-		.ad_name = "bcmgpio",
-		.ad_addr = BCM2835_GPIO_BASE,
-		.ad_size = BCM2835_GPIO_SIZE,
-		.ad_intr = -1,
-	},
-	{
-		/* gpio */
-		.ad_name = "bcmgpio",
-		.ad_addr = BCM2835_GPIO_BASE,
-		.ad_size = BCM2835_GPIO_SIZE,
-		.ad_intr = -1,
-	},
-	{
 		/* Clock Manager */
 		.ad_name = "bcmcm",
 		.ad_addr = BCM2835_CM_BASE,
@@ -221,6 +186,7 @@ obio_match(device_t parent, cfdata_t match, void *aux)
 	return 1;
 }
 
+/* XXX these need to go away */
 bus_space_tag_t al_iot = &bcm2835_bs_tag;
 bus_space_handle_t al_ioh;
 
@@ -240,6 +206,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_dmat = &bcm2835_bus_dma_tag;
 
+	/* XXX DMA setup needs to be moved */
 	sc->sc_dmarange[0].dr_sysbase = 0;
 #if defined(BCM2836)
 	sc->sc_dmarange[0].dr_busbase = BCM2835_BUSADDR_CACHE_DIRECT;
@@ -255,17 +222,6 @@ obio_attach(device_t parent, device_t self, void *aux)
 	/* Set up the attach args. */
 	aaa.aaa_iot = &bcm2835_bs_tag;
 	aaa.aaa_dmat = sc->sc_dmat;
-
-#if defined(BCM2836)
-	if (bus_space_map(al_iot, BCM2836_ARM_LOCAL_BASE, BCM2836_ARM_LOCAL_SIZE,
-	    0, &al_ioh)) {
-		aprint_error(": unable to map local space\n");
-		return;
-	}
-
-	bus_space_write_4(al_iot, al_ioh, BCM2836_LOCAL_CONTROL, 0);
-	bus_space_write_4(al_iot, al_ioh, BCM2836_LOCAL_PRESCALER, 0x80000000);
-#endif
 
 	for (; ad->ad_name != NULL; ad++) {
 		aprint_debug("dev=%s[%u], addr=%lx:+%lx\n",
