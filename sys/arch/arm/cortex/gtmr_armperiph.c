@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.16 2015/04/20 20:19:52 matt Exp $");
 static int gtmr_match(device_t, cfdata_t, void *);
 static void gtmr_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(armgtmr, 0, gtmr_match, gtmr_attach, NULL, NULL);
+CFATTACH_DECL_NEW(armgtmr_armperiph, 0, gtmr_match, gtmr_attach, NULL, NULL);
 
 extern struct gtmr_softc gtmr_sc;
 

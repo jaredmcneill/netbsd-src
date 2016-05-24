@@ -19,6 +19,7 @@ device	obio { [addr=-1], [size=0], [intr=-1]
 attach	obio at mainbus
 file	arch/arm/broadcom/bcm2835_obio.c	obio needs-count
 
+device	armgtmr
 file	arch/arm/cortex/gtmr.c			armgtmr
 
 # OBIO files
