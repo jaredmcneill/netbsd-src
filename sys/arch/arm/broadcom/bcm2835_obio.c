@@ -75,15 +75,6 @@ CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
  * List of port-specific devices to attach to the AMBA AXI bus.
  */
 static const struct ambadev_locators bcm2835_ambadev_locs[] = {
-#if !defined(BCM2836)
-	{
-		/* System Timer */
-		.ad_name = "bcmtmr",
-		.ad_addr = BCM2835_STIMER_BASE,
-		.ad_size = BCM2835_STIMER_SIZE,
-		.ad_intr = BCM2835_INT_TIMER3,
-	},
-#endif
 	{
 		/* VCHIQ */
 		.ad_name = "bcmvchiq",
