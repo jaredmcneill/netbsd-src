@@ -65,6 +65,7 @@ static bool obio_attached;
 static int	obio_match(device_t, cfdata_t, void *);
 static void	obio_attach(device_t, device_t, void *);
 static int	obio_print(void *, const char *);
+void		obio_callback(device_t);
 
 /* attach structures */
 CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
@@ -185,6 +186,15 @@ bus_space_handle_t al_ioh;
 static void
 obio_attach(device_t parent, device_t self, void *aux)
 {
+
+	aprint_normal("\n");
+
+	config_defer(self, obio_callback);
+}
+
+void
+obio_callback(device_t self)
+{
 	struct obio_softc *sc = device_private(self);
 	const struct ambadev_locators *ad = bcm2835_ambadev_locs;
 	struct amba_attach_args aaa;
@@ -208,8 +218,6 @@ obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmarange[0].dr_len = physmem * PAGE_SIZE;
 	bcm2835_bus_dma_tag._ranges = sc->sc_dmarange;
 	bcm2835_bus_dma_tag._nranges = __arraycount(sc->sc_dmarange);
-
-	aprint_normal("\n");
 
 	/* Set up the attach args. */
 	aaa.aaa_iot = &bcm2835_bs_tag;

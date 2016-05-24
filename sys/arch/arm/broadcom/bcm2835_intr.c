@@ -220,6 +220,7 @@ bcm2835_icu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const char * const compatible[] = {
 	    "brcm,bcm2708-armctrl-ic",
+	    "brcm,bcm2835-armctrl-ic",
 #if defined(BCM2836)
 	    "brcm,bcm2836-l1-intc",
 #endif
