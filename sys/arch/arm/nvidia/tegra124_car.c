@@ -657,7 +657,8 @@ tegra124_car_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
-	int error;
+	void *backend;
+	int error, i;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -679,7 +680,9 @@ tegra124_car_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": CAR\n");
 
-	clk_backend_register(self, &tegra124_car_clock_funcs, sc);
+	backend = clk_backend_register(self, &tegra124_car_clock_funcs, sc);
+	for (i = 0; i < __arraycount(tegra124_car_clocks); i++)
+		tegra124_car_clocks[i].base.cb = backend;
 
 	fdtbus_register_clock_controller(self, phandle,
 	    &tegra124_car_fdtclock_funcs);

@@ -52,6 +52,6 @@ struct clk_funcs {
 	struct clk *(*get_parent)(void *, struct clk *);
 };
 
-int	clk_backend_register(device_t, const struct clk_funcs *, void *);
+void *	clk_backend_register(device_t, const struct clk_funcs *, void *);
 
 #endif /* _DEV_CLK_CLK_BACKEND_H */

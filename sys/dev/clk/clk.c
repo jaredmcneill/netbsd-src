@@ -44,7 +44,7 @@ struct clk_backend {
 
 static struct clk_backend *clk_backends = NULL;
 
-int
+void *
 clk_backend_register(device_t dev, const struct clk_funcs *funcs, void *priv)
 {
 	struct clk_backend *cb;
@@ -56,7 +56,7 @@ clk_backend_register(device_t dev, const struct clk_funcs *funcs, void *priv)
 	cb->next = clk_backends;
 	clk_backends = cb;
 
-	return 0;
+	return cb;
 }
 
 struct clk *
