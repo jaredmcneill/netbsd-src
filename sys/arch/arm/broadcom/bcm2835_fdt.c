@@ -33,7 +33,6 @@ __KERNEL_RCSID(0, "$NetBSD$");
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/cpu.h>
 #include <sys/bus.h>
 
 #include <arm/mainbus/mainbus.h>
