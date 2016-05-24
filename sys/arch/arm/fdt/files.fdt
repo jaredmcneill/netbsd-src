@@ -4,5 +4,9 @@ device  gic
 attach  gic at fdt with gic_fdt
 file    arch/arm/fdt/gic_fdt.c             	gic_fdt
 
+device	armgtmr
+attach	armgtmr at fdt with armgtmr_fdt
+file	arch/arm/fdt/armgtmr_fdt.c		armgtmr_fdt
+
 attach	plcom at fdt with plcom_fdt
 file	arch/arm/fdt/plcom_fdt.c		plcom_fdt

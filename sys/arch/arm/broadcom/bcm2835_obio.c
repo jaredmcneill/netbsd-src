@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.26 2015/11/21 07:41:29 mlelstv Ex
 #include <arm/broadcom/bcm2835var.h>
 #include <arm/broadcom/bcm_amba.h>
 
-#include <arm/cortex/mpcore_var.h>
 #include <arm/cortex/gtmr_var.h>
 
 struct obio_softc {
@@ -75,13 +74,6 @@ CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
  * List of port-specific devices to attach to the AMBA AXI bus.
  */
 static const struct ambadev_locators bcm2835_ambadev_locs[] = {
-#if defined(BCM2836)
-	{
-		/* GTMR */
-		.ad_name = "armgtmr",
-		.ad_intr = BCM2836_INT_CNTVIRQ_CPUN(0),
-	},
-#endif
 #if !defined(BCM2836)
 	{
 		/* System Timer */
@@ -226,15 +218,6 @@ obio_attach(device_t parent, device_t self, void *aux)
 	for (; ad->ad_name != NULL; ad++) {
 		aprint_debug("dev=%s[%u], addr=%lx:+%lx\n",
 		    ad->ad_name, ad->ad_instance, ad->ad_addr, ad->ad_size);
-		if (strcmp(ad->ad_name, "armgtmr") == 0) {
-			struct mpcore_attach_args mpcaa = {
-				.mpcaa_name = "armgtmr",
-				.mpcaa_irq = ad->ad_intr,
-			};
-
-			config_found(self, &mpcaa, NULL);
-			continue;
-		}
 
 		aaa.aaa_name = ad->ad_name;
 		aaa.aaa_addr = ad->ad_addr;

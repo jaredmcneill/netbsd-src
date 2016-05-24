@@ -50,12 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.16 2015/04/20 20:19:52 matt Exp $");
 
 #include <arm/cortex/mpcore_var.h>
 
-static int gtmr_match(device_t, cfdata_t, void *);
-static void gtmr_attach(device_t, device_t, void *);
-
 static u_int gtmr_get_timecount(struct timecounter *);
 
-static struct gtmr_softc gtmr_sc;
+struct gtmr_softc gtmr_sc;
 
 struct gtmr_percpu {
 	uint32_t pc_delta;
@@ -72,39 +69,12 @@ static struct timecounter gtmr_timecounter = {
 	.tc_next = NULL,
 };
 
-CFATTACH_DECL_NEW(armgtmr, 0, gtmr_match, gtmr_attach, NULL, NULL);
-
-/* ARGSUSED */
-static int
-gtmr_match(device_t parent, cfdata_t cf, void *aux)
+void
+gtmr_init(device_t self)
 {
-	struct mpcore_attach_args * const mpcaa = aux;
-
-	if (gtmr_sc.sc_dev != NULL)
-		return 0;
-
-	if ((armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK) == 0)
-		return 0;
-
-	if (strcmp(mpcaa->mpcaa_name, cf->cf_name) != 0)
-		return 0;
-
-	return 1;
-}
-
-static void
-gtmr_attach(device_t parent, device_t self, void *aux)
-{
-	struct mpcore_attach_args * const mpcaa = aux;
 	struct gtmr_softc *sc = &gtmr_sc;
-	prop_dictionary_t dict = device_properties(self);
-	char freqbuf[sizeof("X.XXX SHz")];
 
-	/*
-	 * This runs at a fixed frequency of 1 to 50MHz.
-	 */
-	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
-	KASSERT(sc->sc_freq != 0);
+	char freqbuf[sizeof("X.XXX SHz")];
 
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
 
@@ -117,8 +87,8 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	armreg_cntk_ctl_write(armreg_cntk_ctl_read() |
 	    ARM_CNTKCTL_PL0VCTEN | ARM_CNTKCTL_PL0PCTEN);
 
-	self->dv_private = sc;
 	sc->sc_dev = self;
+	self->dv_private = sc;
 
 #ifdef DIAGNOSTIC
 	sc->sc_percpu = percpu_alloc(sizeof(struct gtmr_percpu));
@@ -126,13 +96,6 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 
 	evcnt_attach_dynamic(&sc->sc_ev_missing_ticks, EVCNT_TYPE_MISC, NULL,
 	    device_xname(self), "missing interrupts");
-
-	sc->sc_global_ih = intr_establish(mpcaa->mpcaa_irq, IPL_CLOCK,
-	    IST_LEVEL | IST_MPSAFE, gtmr_intr, NULL);
-	if (sc->sc_global_ih == NULL)
-		panic("%s: unable to register timer interrupt", __func__);
-	aprint_normal_dev(self, "interrupting on irq %d\n",
-	    mpcaa->mpcaa_irq);
 
 	const uint32_t cnt_frq = armreg_cnt_frq_read();
 	if (cnt_frq == 0) {

@@ -46,6 +46,7 @@ struct gtmr_softc {
 
 #ifdef _KERNEL
 struct cpu_info;
+void	gtmr_init(device_t);
 int	gtmr_intr(void *);
 void	gtmr_init_cpu_clock(struct cpu_info *);
 void	gtmr_delay(unsigned int n);

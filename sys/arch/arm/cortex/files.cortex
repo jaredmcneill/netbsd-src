@@ -21,8 +21,10 @@ file	arch/arm/cortex/pl310.c			arml2cc	needs-flag
 
 # ARMv7 Generic Timer
 device	armgtmr
-attach	armgtmr at armperiph
 file	arch/arm/cortex/gtmr.c			armgtmr
+
+attach	armgtmr at armperiph with armgtmr_armperiph
+file	arch/arm/cortex/gtmr_armperiph.c	armgtmr_armperiph
 
 # A9 MPCore Global Timer
 device	a9tmr

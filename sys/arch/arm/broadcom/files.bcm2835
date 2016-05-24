@@ -19,6 +19,8 @@ device	obio { [addr=-1], [size=0], [intr=-1]
 attach	obio at mainbus
 file	arch/arm/broadcom/bcm2835_obio.c	obio needs-count
 
+file	arch/arm/cortex/gtmr.c			armgtmr
+
 # OBIO files
 file	arch/arm/broadcom/bcm2835_space.c	obio
 file	arch/arm/arm/bus_space_a4x.S		obio
@@ -27,11 +29,6 @@ file	arch/arm/arm/bus_space_a4x.S		obio
 device	bcmfdt : bus_space_generic, fdtbus
 attach	bcmfdt at mainbus with bcmfdt
 file	arch/arm/broadcom/bcm2835_fdt.c		bcmfdt
-
-# ARMv7 Generic Timer
-device	armgtmr
-attach	armgtmr at obio
-file	arch/arm/cortex/gtmr.c			armgtmr
 
 # Interrupt Controller (BCM2835_ARMICU_BASE) #, pic_splfuncs
 device	bcmicu: pic, pic_splfuncs
