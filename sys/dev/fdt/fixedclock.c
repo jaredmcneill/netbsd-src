@@ -112,6 +112,7 @@ fixedclk_attach(device_t parent, device_t self, void *aux)
 	struct fixedclk_softc * const sc = device_private(self);
 	const struct fdt_attach_args *faa = aux;
 	const int phandle = faa->faa_phandle;
+	struct clk *clk = &sc->sc_clk;
 	char *name = NULL;
 	int len;
 
@@ -141,8 +142,8 @@ fixedclk_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_clk.name = name;
-	sc->sc_clk.flags = 0;
+	clk->name = name;
+	clk->flags = 0;
 
 	if (of_match_compatible(phandle, fixed_factor_clock_compat)) {
 		/* Fixed factor clock */
@@ -173,7 +174,7 @@ fixedclk_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(" <%s>: %u Hz\n", name, sc->sc_clkfreq);
 	}
 
-	clk_backend_register(self, &fixedclk_funcs, sc);
+	clk->cb = clk_backend_register(self, &fixedclk_funcs, sc);
 	fdtbus_register_clock_controller(self, phandle, &fixedclk_fdt_funcs);
 }
 
