@@ -118,13 +118,6 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_intr = BCM2835_INT_EMMC,
 	},
 	{
-		/* DesignWare_OTG USB controller */
-		.ad_name = "dwctwo",
-		.ad_addr = BCM2835_USB_BASE,
-		.ad_size = BCM2835_USB_SIZE,
-		.ad_intr = BCM2835_INT_USB,
-	},
-	{
 		.ad_name = "bcmspi",
 		.ad_addr = BCM2835_SPI0_BASE,
 		.ad_size = BCM2835_SPI0_SIZE,
