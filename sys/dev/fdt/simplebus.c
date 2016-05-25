@@ -78,8 +78,6 @@ simplebus_attach(device_t parent, device_t self, void *aux)
 
 	struct fdt_attach_args nfaa = *faa;
 	nfaa.faa_name = "simple-bus";
-	nfaa.faa_init = NULL;
-	nfaa.faa_ninit = 0;
 	nfaa.faa_phandle = phandle;
 
 	config_found(self, &nfaa, NULL);
