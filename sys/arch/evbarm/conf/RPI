@@ -88,7 +88,7 @@ options		VCONS_DRAW_INTR
 #options 	RPI_HWCURSOR
 
 # System timer
-bcmtmr0		at obio?
+bcmtmr0		at fdt?
 
 # Power management, Reset controller and Watchdog registers
 bcmpm0		at obio?
@@ -106,7 +106,7 @@ sdmmc*  at sdhc?
 ld*     at sdmmc?
 
 # On-board USB
-dwctwo* 	at obio?
+dwctwo* 	at fdt?
 usb* 		at dwctwo?
 
 # USB device drivers

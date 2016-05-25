@@ -21,5 +21,5 @@ makeoptions 	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
 
 # Architecture options
 
-no bcmtmr0	at obio?		# System Timer
+no bcmtmr0	at fdt?			# System Timer
 armgtmr*	at fdt?			# ARM Generic Timer
