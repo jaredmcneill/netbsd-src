@@ -76,13 +76,6 @@ CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
  */
 static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 	{
-		/* Power Management, Reset controller and Watchdog registers */
-		.ad_name = "bcmpm",
-		.ad_addr = BCM2835_PM_BASE,
-		.ad_size = BCM2835_PM_SIZE,
-		.ad_intr = -1,
-	},
-	{
 		/* DMA Controller */
 		.ad_name = "bcmdmac",
 		.ad_addr = BCM2835_DMA0_BASE,

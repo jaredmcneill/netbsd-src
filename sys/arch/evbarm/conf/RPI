@@ -91,7 +91,7 @@ options		VCONS_DRAW_INTR
 bcmtmr0		at fdt?
 
 # Power management, Reset controller and Watchdog registers
-bcmpm0		at obio?
+watchdog0	at fdt?
 
 # Random number generator
 bcmrng0 	at obio?

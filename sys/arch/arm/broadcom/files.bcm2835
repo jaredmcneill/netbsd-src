@@ -47,9 +47,9 @@ attach	bcmtmr at fdt with bcmtmr_fdt
 file	arch/arm/broadcom/bcm2835_tmr.c		bcmtmr & !bcm2836
 
 # Power Management, Reset Controller, and Watchdog (BCM2835_PM_BASE)
-device	bcmpm: sysmon_wdog
-attach	bcmpm at obio with bcmpm_amba
-file	arch/arm/broadcom/bcm2835_pm.c		bcmpm
+device	watchdog: sysmon_wdog
+attach	watchdog at fdt with bcmpmwdog_fdt
+file	arch/arm/broadcom/bcm2835_pmwdog.c	bcmpmwdog_fdt
 
 # Random number generator (BCM2835_RNG_BASE)
 device	bcmrng

@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.68 2016/02/02 13:55:51 skrll Exp $
 
 #include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm2835var.h>
-#include <arm/broadcom/bcm2835_pmvar.h>
+#include <arm/broadcom/bcm2835_pmwdogvar.h>
 #include <arm/broadcom/bcm2835_mbox.h>
 #include <arm/broadcom/bcm_amba.h>
 
