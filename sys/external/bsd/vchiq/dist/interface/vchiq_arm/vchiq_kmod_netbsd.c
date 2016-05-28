@@ -39,9 +39,10 @@ __KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.6 2016/01/15 07:49:41 mlelst
 #include <sys/bus.h>
 #include <sys/sysctl.h>
 
-#include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm2835_intr.h>
+
+#include <dev/fdt/fdtvar.h>
 
 #include "vchiq_arm.h"
 #include "vchiq_2835.h"
@@ -58,6 +59,7 @@ struct vchiq_softc {
 	void *sc_ih;
 
 	int sc_intr;
+	int sc_phandle;
 };
 
 static struct vchiq_softc *vchiq_softc = NULL;
@@ -78,30 +80,28 @@ CFATTACH_DECL_NEW(vchiq, sizeof(struct vchiq_softc),
 static int
 vchiq_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct amba_attach_args *aaa = aux;
-	
-	if (strcmp(aaa->aaa_name, "bcmvchiq") != 0)
-		return 0;
+	const char * const compatible[] = { "brcm,bcm2835-vchiq", NULL };
+	struct fdt_attach_args * const faa = aux;
 
-	return 1;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 vchiq_attach(device_t parent, device_t self, void *aux)
 {
         struct vchiq_softc *sc = device_private(self);
-	struct amba_attach_args *aaa = aux;
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 
 	aprint_naive("\n");
 	aprint_normal(": BCM2835 VCHIQ\n");
 
 	sc->sc_dev = self;
-	sc->sc_iot = aaa->aaa_iot;
-	sc->sc_intr = aaa->aaa_intr;
+	sc->sc_iot = faa->faa_bst;
+	sc->sc_phandle = phandle;
 
-	if (bus_space_map(aaa->aaa_iot, aaa->aaa_addr, aaa->aaa_size, 0,
-	    &sc->sc_ioh)) {
-		aprint_error_dev(self, "unable to map device\n");
+	if (fdtbus_map_reg(phandle, 0, faa->faa_bst, 0, &sc->sc_ioh) != 0) {
+		aprint_error_dev(sc->sc_dev, "unable to map device\n");
 		return;
 	}
 
@@ -114,17 +114,24 @@ static void
 vchiq_defer(device_t self)
 {
 	struct vchiq_attach_args vaa;
-	struct vchiq_softc *sc = device_private(self);
+        struct vchiq_softc *sc = device_private(self);
+	const int phandle = sc->sc_phandle;
 
 	vchiq_core_initialize();
 
-	sc->sc_ih = intr_establish(sc->sc_intr, IPL_SCHED, IST_LEVEL,
-	    vchiq_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		    sc->sc_intr);
+	char intrstr[128];
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
+
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SCHED,
+	    FDT_INTR_MPSAFE, vchiq_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "unable to establish interrupt\n");
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	vchiq_init();
 
@@ -138,12 +145,12 @@ vchiq_intr(void *priv)
 	struct vchiq_softc *sc = priv;
 	uint32_t status;
 
-	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, 0x40);
+	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, 0x0);
 	if (status & 0x4)
 		remote_event_pollall(&g_state);
 
 	bus_space_barrier(vchiq_softc->sc_iot, vchiq_softc->sc_ioh,
-	    0x40, 4, BUS_SPACE_BARRIER_READ);
+	    0x0, 4, BUS_SPACE_BARRIER_READ);
 
 	return 1;
 }
@@ -170,9 +177,9 @@ remote_event_signal(REMOTE_EVENT_T *event)
 
 	if (event->armed) {
 		bus_space_barrier(vchiq_softc->sc_iot, vchiq_softc->sc_ioh,
-		    0x48, 4, BUS_SPACE_BARRIER_WRITE);
+		    0x8, 4, BUS_SPACE_BARRIER_WRITE);
 		bus_space_write_4(vchiq_softc->sc_iot, vchiq_softc->sc_ioh,
-		    0x48, 0);
+		    0x8, 0);
 	}
 }
 

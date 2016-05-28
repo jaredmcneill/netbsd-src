@@ -76,13 +76,6 @@ CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
  */
 static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 	{
-		/* VCHIQ */
-		.ad_name = "bcmvchiq",
-		.ad_addr = BCM2835_VCHIQ_BASE,
-		.ad_size = BCM2835_VCHIQ_SIZE,
-		.ad_intr = BCM2835_INT_ARMDOORBELL0,
-	},
-	{
 		/* Power Management, Reset controller and Watchdog registers */
 		.ad_name = "bcmpm",
 		.ad_addr = BCM2835_PM_BASE,

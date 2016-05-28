@@ -72,7 +72,7 @@ vcmbox* 	at bcmmbox?
 bcmdmac0	at obio?
 
 # VCHIQ
-vchiq0		at obio?
+vchiq0		at fdt?
 
 # AUDS
 vcaudio0	at vchiq0
