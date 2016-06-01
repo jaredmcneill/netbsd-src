@@ -75,29 +75,6 @@ CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
  * List of port-specific devices to attach to the AMBA AXI bus.
  */
 static const struct ambadev_locators bcm2835_ambadev_locs[] = {
-#if !defined(BCM2836)
-	{
-		/* System Timer */
-		.ad_name = "bcmtmr",
-		.ad_addr = BCM2835_STIMER_BASE,
-		.ad_size = BCM2835_STIMER_SIZE,
-		.ad_intr = BCM2835_INT_TIMER3,
-	},
-#endif
-	{
-		/* VCHIQ */
-		.ad_name = "bcmvchiq",
-		.ad_addr = BCM2835_VCHIQ_BASE,
-		.ad_size = BCM2835_VCHIQ_SIZE,
-		.ad_intr = BCM2835_INT_ARMDOORBELL0,
-	},
-	{
-		/* Power Management, Reset controller and Watchdog registers */
-		.ad_name = "bcmpm",
-		.ad_addr = BCM2835_PM_BASE,
-		.ad_size = BCM2835_PM_SIZE,
-		.ad_intr = -1,
-	},
 	{
 		/* DMA Controller */
 		.ad_name = "bcmdmac",
@@ -125,13 +102,6 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_addr = BCM2835_EMMC_BASE,
 		.ad_size = BCM2835_EMMC_SIZE,
 		.ad_intr = BCM2835_INT_EMMC,
-	},
-	{
-		/* DesignWare_OTG USB controller */
-		.ad_name = "dwctwo",
-		.ad_addr = BCM2835_USB_BASE,
-		.ad_size = BCM2835_USB_SIZE,
-		.ad_intr = BCM2835_INT_USB,
 	},
 	{
 		.ad_name = "bcmspi",

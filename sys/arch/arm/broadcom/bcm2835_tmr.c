@@ -39,9 +39,13 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.7 2015/07/29 14:22:49 skrll Exp $"
 #include <sys/timetc.h>
 #include <sys/bus.h>
 
-#include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835_intr.h>
 #include <arm/broadcom/bcm2835reg.h>
+
+#include <dev/fdt/fdtvar.h>
+
+/* Use the 3rd timer*/
+#define BCMTIMER	3
 
 #define	BCM2835_STIMER_CS	0x00
 #define	 BCM2835_STIMER_M0	 __BIT(0)
@@ -65,6 +69,8 @@ struct bcm2835tmr_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+
+	void *sc_ih;
 };
 
 static int bcmtmr_match(device_t, cfdata_t, void *);
@@ -87,26 +93,26 @@ static struct timecounter bcm2835tmr_timecounter = {
 	.tc_next = NULL,
 };
 
-CFATTACH_DECL_NEW(bcmtmr_amba, sizeof(struct bcm2835tmr_softc),
+CFATTACH_DECL_NEW(bcmtmr_fdt, sizeof(struct bcm2835tmr_softc),
     bcmtmr_match, bcmtmr_attach, NULL, NULL);
 
 /* ARGSUSED */
 static int
 bcmtmr_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct amba_attach_args *aaa = aux;
-
-	if (strcmp(aaa->aaa_name, "bcmtmr") != 0)
-		return 0;
-
-	return 1;
+	const char * const compatible[] = {
+	    "brcm,bcm2835-system-timer",
+	    NULL
+	};
+	struct fdt_attach_args * const faa = aux;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 bcmtmr_attach(device_t parent, device_t self, void *aux)
 {
         struct bcm2835tmr_softc *sc = device_private(self);
- 	struct amba_attach_args *aaa = aux;
+	struct fdt_attach_args * const faa = aux;
 
 	aprint_naive("\n");
 	aprint_normal(": VC System Timer\n");
@@ -115,11 +121,25 @@ bcmtmr_attach(device_t parent, device_t self, void *aux)
 		bcm2835tmr_sc = sc;
 
 	sc->sc_dev = self;
-	sc->sc_iot = aaa->aaa_iot;
+	sc->sc_iot = faa->faa_bst;
+	const int phandle = faa->faa_phandle;
 
-	if (bus_space_map(aaa->aaa_iot, aaa->aaa_addr, BCM2835_STIMER_SIZE, 0,
-	    &sc->sc_ioh)) {
+	if (fdtbus_map_reg(phandle, 0, sc->sc_iot, 0, &sc->sc_ioh) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to map device\n");
+		return;
+	}
+
+	char intrstr[128];
+	if (!fdtbus_intr_str(phandle, BCMTIMER, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
+		return;
+	}
+
+	sc->sc_ih = fdtbus_intr_establish(phandle, BCMTIMER, IPL_CLOCK,
+	    FDT_INTR_MPSAFE, clockhandler, NULL);
+	if (sc->sc_ih == NULL) {
+		aprint_error(": failed to establish interrupt on %s\n",
+		    intrstr);
 		return;
 	}
 
@@ -130,7 +150,6 @@ void
 cpu_initclocks(void)
 {
 	struct bcm2835tmr_softc *sc = bcm2835tmr_sc;
-	void *clock_ih;
 	uint32_t stcl;
 
 	KASSERT(sc != NULL);
@@ -143,10 +162,6 @@ cpu_initclocks(void)
 	stcl += counts_per_hz;
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_STIMER_C3, stcl);
-	clock_ih = intr_establish(BCM2835_INT_TIMER3, IPL_CLOCK, IST_LEVEL,
-	    clockhandler, NULL);
-	if (clock_ih == NULL)
-		panic("%s: unable to register timer interrupt", __func__);
 
 	tc_init(&bcm2835tmr_timecounter);
 }

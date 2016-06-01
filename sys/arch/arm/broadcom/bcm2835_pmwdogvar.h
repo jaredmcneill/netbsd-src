@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_pmvar.h,v 1.1 2012/07/26 06:21:57 skrll Exp $	*/
+/*	$NetBSD$	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,9 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_ARM_BROADCOM_BCM2835_PM_VAR_H_
-#define	_ARM_BROADCOM_BCM2835_PM_VAR_H_
+#ifndef	_ARM_BROADCOM_BCM2835_PMWDOG_VAR_H_
+#define	_ARM_BROADCOM_BCM2835_PMWDOG_VAR_H_
 
 void bcm2835_system_reset(void);
 
-#endif	/* _ARM_BROADCOM_BCM2835_PM_VAR_H_ */
+#endif	/* _ARM_BROADCOM_BCM2835_PMWDOG_VAR_H_ */

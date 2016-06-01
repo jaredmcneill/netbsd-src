@@ -6,7 +6,7 @@
 define	vchiqbus { }
 
 device	vchiq: vchiqbus
-attach	vchiq at obio
+attach	vchiq at fdt
 file	external/bsd/vchiq/dist/interface/compat/vchi_bsd.c		vchiq
 file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_2835_arm.c	vchiq
 file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_arm.c		vchiq

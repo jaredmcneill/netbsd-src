@@ -43,13 +43,13 @@ file	arch/arm/broadcom/bcm2835_mbox.c	bcmmbox
 
 # System Timer (BCM2835_TIMER_BASE)
 device	bcmtmr
-attach	bcmtmr at obio with bcmtmr_amba
+attach	bcmtmr at fdt with bcmtmr_fdt
 file	arch/arm/broadcom/bcm2835_tmr.c		bcmtmr & !bcm2836
 
 # Power Management, Reset Controller, and Watchdog (BCM2835_PM_BASE)
-device	bcmpm: sysmon_wdog
-attach	bcmpm at obio with bcmpm_amba
-file	arch/arm/broadcom/bcm2835_pm.c		bcmpm
+device	watchdog: sysmon_wdog
+attach	watchdog at fdt with bcmpmwdog_fdt
+file	arch/arm/broadcom/bcm2835_pmwdog.c	bcmpmwdog_fdt
 
 # Random number generator (BCM2835_RNG_BASE)
 device	bcmrng
@@ -66,7 +66,7 @@ attach	bcmdmac at obio with bcmdmac_amba
 file	arch/arm/broadcom/bcm2835_dmac.c	bcmdmac		needs-flag
 
 # USB (BCM2835_USB_BASE)
-attach dwctwo at obio with bcmdwctwo
+attach dwctwo at fdt with bcmdwctwo
 file	arch/arm/broadcom/bcm2835_dwctwo.c	bcmdwctwo	needs-flag
 
 # GPIO misc. functions

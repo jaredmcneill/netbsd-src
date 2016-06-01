@@ -62,6 +62,7 @@ bcmfdt_attach(device_t parent, device_t self, void *aux)
 {
 	const char *bcmfdt_init[] = {
 		"interrupt-controller",
+		"timer",
 		"gpio",
 		"clocks",
 		"mailbox",

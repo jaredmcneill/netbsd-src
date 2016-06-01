@@ -87,7 +87,7 @@ bcmmbox_attach(device_t parent, device_t self, void *aux)
 	struct bcm2835mbox_softc *sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	struct bcmmbox_attach_args baa;
-	int phandle = faa->faa_phandle;
+	const int phandle = faa->faa_phandle;
 	int i;
 
 	aprint_naive("\n");

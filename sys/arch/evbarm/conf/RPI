@@ -72,7 +72,7 @@ vcmbox* 	at bcmmbox?
 bcmdmac0	at obio?
 
 # VCHIQ
-vchiq0		at obio?
+vchiq0		at fdt?
 
 # AUDS
 vcaudio0	at vchiq0
@@ -88,10 +88,10 @@ options		VCONS_DRAW_INTR
 #options 	RPI_HWCURSOR
 
 # System timer
-bcmtmr0		at obio?
+bcmtmr0		at fdt?
 
 # Power management, Reset controller and Watchdog registers
-bcmpm0		at obio?
+watchdog0	at fdt?
 
 # Random number generator
 bcmrng0 	at obio?
@@ -106,7 +106,7 @@ sdmmc*  at sdhc?
 ld*     at sdmmc?
 
 # On-board USB
-dwctwo* 	at obio?
+dwctwo* 	at fdt?
 usb* 		at dwctwo?
 
 # USB device drivers
