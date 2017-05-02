@@ -186,6 +186,38 @@ of_match_compatible(int phandle, const char * const *strings)
 }
 
 /*
+ * const struct of_compat_data *of_search_compatible(phandle, compat_data)
+ *
+ * This routine searches an array of compat_data structures for a
+ * matching "compatible" entry matching the supplied OFW node.
+ *
+ * Arguments:
+ *	phandle		OFW phandle of device to be checked for
+ *			compatibility.
+ *	compat_data	Array of possible compat entry strings and
+ *			associated metadata. The last entry in the
+ *			list should have a "compat" of NULL to terminate
+ *			the list.
+ *
+ * Return Value:
+ *	The first matching compat_data entry in the array. If no matches
+ *	are found, the terminating ("compat" of NULL) record is returned.
+ *
+ * Side Effects:
+ *	None.
+ */
+const struct of_compat_data *
+of_search_compatible(int phandle, const struct of_compat_data *compat_data)
+{
+	for (; compat_data->compat != NULL; compat_data++) {
+		const char *compat[] = { compat_data->compat, NULL };
+		if (of_match_compatible(phandle, compat))
+			break;
+	}
+	return compat_data;
+}
+
+/*
  * int of_packagename(phandle, buf, bufsize)
  *
  * This routine places the last component of an OFW node's name

@@ -270,11 +270,8 @@ tegra_apbdma_transfer(device_t dev, void *priv, struct fdtbus_dma_req *req)
 	if ((req->dreq_segs[0].ds_len & 3) != 0)
 		return EINVAL;
 
-	/* REQ_SEL is between 0 and 31 */
-	if (req->dreq_sel < 0 || req->dreq_sel > 31)
-		return EINVAL;
-
-	csr |= __SHIFTIN(req->dreq_sel, APBDMACHAN_CSR_REQ_SEL);
+	/* DMA channel number */
+	csr |= __SHIFTIN(n, APBDMACHAN_CSR_REQ_SEL);
 
 	/*
 	 * Set DMA transfer direction.

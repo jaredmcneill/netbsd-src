@@ -1,0 +1,87 @@
+/* $NetBSD$ */
+
+/*-
+ * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#ifndef _ARM_TEGRA_I2SREG_H
+#define _ARM_TEGRA_I2SREG_H
+
+#define	I2S_CTRL_REG			0x00
+#define	 I2S_CTRL_XFER_EN_TX		__BIT(31)
+#define	 I2S_CTRL_XFER_EN_RX		__BIT(30)
+#define	 I2S_CTRL_CG_EN			__BIT(29)
+#define	 I2S_CTRL_SOFT_RESET		__BIT(28)
+#define	 I2S_CTRL_TX_FLOWCTL_EN		__BIT(27)
+#define	 I2S_CTRL_PIPE_MACRO_EN		__BIT(19)
+#define	 I2S_CTRL_FRAME_FORMAT		__BITS(14,12)
+#define	  I2S_CTRL_FRAME_FORMAT_LRCK_MODE	0
+#define	  I2S_CTRL_FRAME_FORMAT_FSYNC_MODE	1
+#define	 I2S_CTRL_MASTER		__BIT(10)
+#define	 I2S_CTRL_LRCK_POLARITY		__BIT(9)
+#define	 I2S_CTRL_LPBK			__BIT(8)
+#define	 I2S_CTRL_BIT_CODE		__BITS(5,4)
+#define	  I2S_CTRL_BIT_CODE_LINEAR		0
+#define	  I2S_CTRL_BIT_CODE_ULAW		1
+#define	  I2S_CTRL_BIT_CODE_ALAW		2
+#define	 I2S_CTRL_BIT_SIZE		__BITS(2,0)
+#define	  I2S_CTRL_BIT_SIZE_8			1
+#define	  I2S_CTRL_BIT_SIZE_12			2
+#define	  I2S_CTRL_BIT_SIZE_16			3
+#define	  I2S_CTRL_BIT_SIZE_20			4
+#define	  I2S_CTRL_BIT_SIZE_24			5
+#define	  I2S_CTRL_BIT_SIZE_28			6
+#define	  I2S_CTRL_BIT_SIZE_32			7
+#define	I2S_TIMING_REG			0x04
+#define	 I2S_TIMING_NON_SYM_EN		__BIT(12)
+#define	 I2S_TIMING_CHANNEL_BIT_CNT	__BITS(10,0)
+#define	I2S_OFFSET_REG			0x08
+#define	 I2S_OFFSET_RX_DATA_OFFSET	__BITS(26,16)
+#define	 I2S_OFFSET_TX_DATA_OFFSET	__BITS(10,0)
+#define	I2S_CH_CTRL_REG			0x0c
+#define	 I2S_CH_CTRL_FSYNC_WIDTH	__BITS(31,24)
+#define	  I2S_CH_CTRL_FSYNC_WIDTH_BITS(n)	((n) + 1)
+#define	 I2S_CH_CTRL_HIGHZ_CTRL		__BITS(13,12)
+#define	  I2S_CH_CTRL_HIGHZ_CTRL_NOHIGHZ		0
+#define	  I2S_CH_CTRL_HIGHZ_CTRL_HIGHZ			1
+#define	  I2S_CH_CTRL_HIGHZ_CTRL_HIGHZ_ON_HALF_BIT_CLK	2
+#define	 I2S_CH_CTRL_RX_BIT_ORDER	__BIT(10)
+#define	 I2S_CH_CTRL_TX_BIT_ORDER	__BIT(9)
+#define	 I2S_CH_CTRL_EDGE_CTRL		__BIT(8)
+#define	 I2S_CH_CTRL_RX_MASK_BITS	__BITS(6,4)
+#define	 I2S_CH_CTRL_TX_MASK_BITS	__BITS(2,0)
+#define	I2S_SLOT_CTRL_REG		0x10
+#define	 I2S_SLOT_CTRL_TOTAL_SLOTS	__BITS(3,0)
+#define	I2S_AUDIOCIF_I2STX_CTRL_REG	0x14
+#define	I2S_AUDIOCIF_I2SRX_CTRL_REG	0x18
+#define	I2S_FLOWCTRL_REG		0x1c
+#define	I2S_TX_STEP_REG			0x20
+#define	I2S_FLOW_STATUS_REG		0x24
+#define	I2S_FLOW_TOTAL_REG		0x28
+#define	I2S_FLOW_OVER_REG		0x2c
+#define	I2S_FLOW_UNDER_REG		0x30
+#define	I2S_SLOT_CTRL2_REG		0x64
+
+#endif /* _ARM_TEGRA_I2SREG_H */

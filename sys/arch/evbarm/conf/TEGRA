@@ -104,6 +104,7 @@ titemp*		at iic?
 seeprom*	at iic?
 as3722pmic*	at iic?
 as3722reg*	at as3722pmic?
+alc56xx*	at iic?
 
 # RTC
 tegrartc*	at fdt?			# RTC
@@ -123,6 +124,11 @@ atabus*		at ata?
 atapibus*	at atapi?
 wd*		at atabus? drive ?
 cd*		at atapibus? drive ?
+
+# Audio Hub
+tegraahub*	at fdt?			# AHUB
+tegrai2s*	at tegraahub?		# I2S
+tegracodec*	at fdt?
 
 # HDA
 hdaudio*	at fdt?			# HDA

@@ -425,6 +425,13 @@ static const char *mux_xusb_ss_p[] =
 	  "pll_c_out0", "pll_c2_out0", "pll_c3_out0", NULL };
 static const char *mux_xusb_fs_p[] =
 	{ "clk_m", NULL, "pll_u_48", NULL, "pll_p_out0", NULL, "pll_u_480" };
+static const char *mux_d_audio_p[] =
+	{ "pll_a_out0", "pll_c2_out0", "pll_c_out0", "pll_c3_out0",
+	  "pll_p_out0", NULL, "clk_m", "clk_src_alt" };
+static const char *mux_i2s_p[] =
+	{ "pll_a_out0", NULL, "sync_clk", NULL, "pll_p_out0", NULL, "clk_m" };
+static const char *mux_extern_p[] =
+	{ "pll_a_out0", "clk_s", "pll_p_out0", "clk_m", "pll_e_out0" };
 
 static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_FIXED("clk_m", TEGRA_REF_FREQ),
@@ -446,6 +453,11 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_PLL("pll_re", "clk_m", CAR_PLLREFE_BASE_REG,
 		CAR_PLLREFE_BASE_DIVM, CAR_PLLREFE_BASE_DIVN, CAR_PLLREFE_BASE_DIVP),
 
+	CLK_DIV("pll_p_out1", "pll_p",
+		CAR_PLLP_OUTA_REG, CAR_PLLP_OUTA_OUT1_RATIO),
+	CLK_PLL("pll_a", "pll_p_out1", CAR_PLLA_BASE_REG,
+		CAR_PLLA_BASE_DIVM, CAR_PLLA_BASE_DIVN, CAR_PLLA_BASE_DIVP),
+
 	CLK_FIXED_DIV("pll_p_out0", "pll_p", 1),
 	CLK_FIXED_DIV("pll_u_480", "pll_u", 1),
 	CLK_FIXED_DIV("pll_u_60", "pll_u", 8),
@@ -455,6 +467,8 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_FIXED_DIV("pll_d_out0", "pll_d", 2),
 	CLK_FIXED_DIV("pll_d2_out0", "pll_d2", 1),
 	CLK_FIXED_DIV("pll_re_out", "pll_re", 1),
+	CLK_DIV("pll_a_out0", "pll_a",
+		CAR_PLLA_OUT_REG, CAR_PLLA_OUT_DIV),
 
 	CLK_MUX("mux_uarta", CAR_CLKSRC_UARTA_REG, CAR_CLKSRC_UART_SRC,
 		mux_uart_p),
@@ -523,6 +537,33 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_MUX("mux_xusb_fs",
 		CAR_CLKSRC_XUSB_FS_REG, CAR_CLKSRC_XUSB_FS_SRC,
 		mux_xusb_fs_p),
+	CLK_MUX("mux_d_audio",
+		CAR_CLKSRC_AUDIO_REG, CAR_CLKSRC_AUDIO_SRC,
+		mux_d_audio_p),
+	CLK_MUX("mux_i2s0",
+		CAR_CLKSRC_I2S0_REG, CAR_CLKSRC_I2S_SRC,
+		mux_i2s_p),
+	CLK_MUX("mux_i2s1",
+		CAR_CLKSRC_I2S1_REG, CAR_CLKSRC_I2S_SRC,
+		mux_i2s_p),
+	CLK_MUX("mux_i2s2",
+		CAR_CLKSRC_I2S2_REG, CAR_CLKSRC_I2S_SRC,
+		mux_i2s_p),
+	CLK_MUX("mux_i2s3",
+		CAR_CLKSRC_I2S3_REG, CAR_CLKSRC_I2S_SRC,
+		mux_i2s_p),
+	CLK_MUX("mux_i2s4",
+		CAR_CLKSRC_I2S4_REG, CAR_CLKSRC_I2S_SRC,
+		mux_i2s_p),
+	CLK_MUX("mux_extern1",
+		CAR_CLKSRC_EXTPERIPH1_REG, CAR_CLKSRC_EXTPERIPH_SRC,
+		mux_extern_p),
+	CLK_MUX("mux_extern2",
+		CAR_CLKSRC_EXTPERIPH2_REG, CAR_CLKSRC_EXTPERIPH_SRC,
+		mux_extern_p),
+	CLK_MUX("mux_extern3",
+		CAR_CLKSRC_EXTPERIPH3_REG, CAR_CLKSRC_EXTPERIPH_SRC,
+		mux_extern_p),
 
 	CLK_DIV("div_uarta", "mux_uarta",
 		CAR_CLKSRC_UARTA_REG, CAR_CLKSRC_UART_DIV),
@@ -590,6 +631,24 @@ static struct tegra_clk tegra124_car_clocks[] = {
 		CAR_CLKSRC_XUSB_FS_REG, CAR_CLKSRC_XUSB_FS_DIV),
 	CLK_DIV("xusb_falcon_src", "mux_xusb_falcon",
 		CAR_CLKSRC_XUSB_FALCON_REG, CAR_CLKSRC_XUSB_FALCON_DIV),
+	CLK_DIV("div_d_audio", "mux_d_audio",
+		CAR_CLKSRC_AUDIO_REG, CAR_CLKSRC_AUDIO_DIV),
+	CLK_DIV("div_i2s0", "mux_i2s0",
+		CAR_CLKSRC_I2S0_REG, CAR_CLKSRC_I2S_DIV),
+	CLK_DIV("div_i2s1", "mux_i2s1",
+		CAR_CLKSRC_I2S1_REG, CAR_CLKSRC_I2S_DIV),
+	CLK_DIV("div_i2s2", "mux_i2s2",
+		CAR_CLKSRC_I2S2_REG, CAR_CLKSRC_I2S_DIV),
+	CLK_DIV("div_i2s3", "mux_i2s3",
+		CAR_CLKSRC_I2S3_REG, CAR_CLKSRC_I2S_DIV),
+	CLK_DIV("div_i2s4", "mux_i2s4",
+		CAR_CLKSRC_I2S4_REG, CAR_CLKSRC_I2S_DIV),
+	CLK_DIV("extern1", "mux_extern1",
+		CAR_CLKSRC_EXTPERIPH1_REG, CAR_CLKSRC_EXTPERIPH_DIV),
+	CLK_DIV("extern2", "mux_extern2",
+		CAR_CLKSRC_EXTPERIPH2_REG, CAR_CLKSRC_EXTPERIPH_DIV),
+	CLK_DIV("extern3", "mux_extern3",
+		CAR_CLKSRC_EXTPERIPH3_REG, CAR_CLKSRC_EXTPERIPH_DIV),
 
 	CLK_GATE_L("uarta", "div_uarta", CAR_DEV_L_UARTA),
 	CLK_GATE_L("uartb", "div_uartb", CAR_DEV_L_UARTB),
@@ -636,6 +695,14 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_GATE_W("xusb_ss", "xusb_ss_src", CAR_DEV_W_XUSB_SS),
 	CLK_GATE_X("gpu", "pll_ref", CAR_DEV_X_GPU),
 	CLK_GATE_H("apbdma", "clk_m", CAR_DEV_H_APBDMA),
+
+	CLK_GATE_V("apbif", "clk_m", CAR_DEV_V_APBIF),
+	CLK_GATE_V("d_audio", "div_d_audio", CAR_DEV_V_AUDIO),
+	CLK_GATE_L("i2s0", "div_i2s0", CAR_DEV_L_I2S0),
+	CLK_GATE_L("i2s1", "div_i2s1", CAR_DEV_L_I2S1),
+	CLK_GATE_L("i2s2", "div_i2s2", CAR_DEV_L_I2S2),
+	CLK_GATE_L("i2s3", "div_i2s3", CAR_DEV_V_I2S3),
+	CLK_GATE_L("i2s4", "div_i2s4", CAR_DEV_V_I2S4),
 };
 
 struct tegra124_init_parent {
@@ -653,6 +720,15 @@ struct tegra124_init_parent {
 	{ "xusb_ss_src",	"pll_u_480" },
 	{ "xusb_fs_src",	"pll_u_48" },
 	{ "host1x",		"pll_p_out0" },
+	{ "extern1",		"pll_a_out0" },
+	{ "d_audio",		"pll_a_out0" },
+};
+
+struct tegra124_init_rate {
+	const char *clock;
+	u_int rate;
+} tegra124_init_rates[] = {
+	{ "pll_a",		282240000 },
 };
 
 struct tegra124_car_rst {
@@ -704,6 +780,7 @@ static void	tegra124_car_utmip_init(struct tegra124_car_softc *);
 static void	tegra124_car_xusb_init(struct tegra124_car_softc *);
 static void	tegra124_car_watchdog_init(struct tegra124_car_softc *);
 static void	tegra124_car_parent_init(struct tegra124_car_softc *);
+static void	tegra124_car_rate_init(struct tegra124_car_softc *);
 
 static void	tegra124_car_rnd_attach(device_t);
 static void	tegra124_car_rnd_callback(size_t, void *);
@@ -776,9 +853,26 @@ static void
 tegra124_car_init(struct tegra124_car_softc *sc)
 {
 	tegra124_car_parent_init(sc);
+	tegra124_car_rate_init(sc);
 	tegra124_car_utmip_init(sc);
 	tegra124_car_xusb_init(sc);
 	tegra124_car_watchdog_init(sc);
+
+#ifdef TEGRA_CLOCK_DEBUG
+	device_printf(sc->sc_dev, "%16s %16s   %s\n",
+	    "CLOCK", "PARENT", "RATE");
+	device_printf(sc->sc_dev, "%16s %16s   %s\n",
+	    "----------", "----------", "----------");
+	for (u_int n = 0; n < __arraycount(tegra124_car_clocks); n++) {
+		struct tegra_clk *tclk = &tegra124_car_clocks[n];
+		struct clk *clk = TEGRA_CLK_BASE(tclk);
+		struct clk *clk_parent = clk_get_parent(clk);
+
+		device_printf(sc->sc_dev, "%16s %16s   %u\n",
+		    clk->name, clk_parent ? clk_parent->name : "-",
+		    clk_get_rate(clk));
+	}
+#endif
 }
 
 static void
@@ -802,6 +896,26 @@ tegra124_car_parent_init(struct tegra124_car_softc *sc)
 			    clk->name, clk_parent->name, error);
 		}
 		clk_put(clk_parent);
+		clk_put(clk);
+	}
+}
+
+static void
+tegra124_car_rate_init(struct tegra124_car_softc *sc)
+{
+	struct clk *clk;
+	int error;
+	u_int n;
+
+	for (n = 0; n < __arraycount(tegra124_init_rates); n++) {
+		clk = clk_get(&sc->sc_clkdom, tegra124_init_rates[n].clock);
+		KASSERT(clk != NULL);
+		error = clk_set_rate(clk, tegra124_init_rates[n].rate);
+		if (error) {
+			aprint_error_dev(sc->sc_dev,
+			    "couldn't set '%s' rate to %u: %d\n",
+			    clk->name, tegra124_init_rates[n].rate, error);
+		}
 		clk_put(clk);
 	}
 }
@@ -1106,6 +1220,53 @@ tegra124_car_clock_set_rate_pll(struct tegra124_car_softc *sc,
 		    CAR_PLLD2_BASE_DIVP);
 
 		return 0;
+	} else if (tpll->base_reg == CAR_PLLA_BASE_REG) {
+		struct {
+			u_int rate_parent;
+			u_int rate;
+			u_int n;
+			u_int m;
+			u_int p;
+			u_int cpcon;
+		} rates[] = {
+			{ 9600000, 282240000, 147, 5, 1, 4 },
+			{ 9600000, 368640000, 192, 5, 1, 4 },
+			{ 28800000, 282240000, 245, 25, 1, 8 },
+			{ 28800000, 368640000, 320, 25, 1, 8 },
+		};
+
+		for (int i = 0; i < __arraycount(rates); i++) {
+			if (rates[i].rate_parent != rate_parent)
+				continue;
+			if (rates[i].rate != rate)
+				continue;
+
+			/* Set frequency */
+			tegra_reg_set_clear(bst, bsh, tpll->base_reg,
+			    CAR_PLLA_BASE_ENABLE |
+			    __SHIFTIN(rates[i].m, CAR_PLLA_BASE_DIVM) |
+			    __SHIFTIN(rates[i].n, CAR_PLLA_BASE_DIVN) |
+			    __SHIFTIN(rates[i].p, CAR_PLLA_BASE_DIVP),
+			    CAR_PLLA_BASE_DIVM |
+			    CAR_PLLA_BASE_DIVN |
+			    CAR_PLLA_BASE_DIVP);
+
+			/* Wait for lock */
+			tegra_reg_set_clear(bst, bsh, CAR_PLLA_MISC_REG,
+			    CAR_PLLA_MISC_LOCK_ENABLE, 0);
+			uint32_t v;
+			do {
+				delay(2);
+				v = bus_space_read_4(bst, bsh, tpll->base_reg);
+			} while ((v & CAR_PLLA_BASE_LOCK) == 0);
+
+			delay(300);
+
+			return 0;
+		}
+
+		/* Not supported rate */
+		return EIO;
 	} else {
 		/* TODO */
 		return EOPNOTSUPP;

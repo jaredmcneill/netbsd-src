@@ -41,4 +41,13 @@ int		clk_disable(struct clk *);
 int		clk_set_parent(struct clk *, struct clk *);
 struct clk *	clk_get_parent(struct clk *);
 
+static inline int
+clk_set_rate_enable(struct clk *clk, u_int rate)
+{
+	int error = clk_set_rate(clk, rate);
+	if (error == 0)
+		error = clk_enable(clk);
+	return error;
+}
+
 #endif /* _DEV_CLK_CLK_H */

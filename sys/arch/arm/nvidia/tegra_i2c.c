@@ -364,7 +364,7 @@ tegra_i2c_wait(struct tegra_i2c_softc *sc, int flags)
 	}
 	if (retry == 0) {
 		stat = I2C_READ(sc, I2C_INTERRUPT_STATUS_REG);
-		device_printf(sc->sc_dev, "timed out, status = %#x\n", stat);
+		aprint_debug_dev(sc->sc_dev, "timed out, status = %#x\n", stat);
 		return ETIMEDOUT;
 	}
 
@@ -374,7 +374,7 @@ tegra_i2c_wait(struct tegra_i2c_softc *sc, int flags)
 	    I2C_INTERRUPT_MASK_TIMEOUT;
 
 	if (stat & err_mask) {
-		device_printf(sc->sc_dev, "error, status = %#x\n", stat);
+		aprint_debug_dev(sc->sc_dev, "error, status = %#x\n", stat);
 		return EIO;
 	}
 

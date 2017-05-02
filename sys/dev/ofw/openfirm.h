@@ -104,8 +104,16 @@ int	openfirmware(void *);
 /*
  * Functions and variables provided by machine-independent code.
  */
+
+struct of_compat_data {
+	const char *compat;
+	uintptr_t data;
+};
+
 int	of_compatible(int, const char * const *);
 int	of_match_compatible(int, const char * const *);
+const struct of_compat_data *
+	of_search_compatible(int, const struct of_compat_data *);
 int	of_decode_int(const unsigned char *);
 int	of_packagename(int, char *, int);
 int	of_find_firstchild_byname(int, const char *);

@@ -287,3 +287,11 @@ fdtbus_status_okay(int phandle)
 
 	return strncmp(prop, "ok", 2) == 0;
 }
+
+const char *
+fdtbus_get_string(int phandle, const char *prop)
+{
+	const int off = fdtbus_phandle2offset(phandle);
+
+	return fdt_getprop(fdtbus_get_data(), off, prop, NULL);
+}

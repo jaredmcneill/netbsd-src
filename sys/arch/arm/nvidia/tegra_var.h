@@ -33,6 +33,8 @@
 #include <sys/bus.h>
 #include <sys/gpio.h>
 
+#include <dev/audio_if.h>
+
 #include "opt_tegra.h"
 
 extern struct bus_space armv7_generic_bs_tag;
@@ -88,6 +90,34 @@ uint32_t tegra_fuse_read(u_int);
 
 void	tegra_xusbpad_sata_enable(void);
 void	tegra_xusbpad_xhci_enable(void);
+
+enum {
+	AUDIOCIF_DIR_TX = 0,
+	AUDIOCIF_DIR_RX = 1,
+};
+
+int	tegra_ahub_audiocif_encode(const audio_params_t *, int, uint32_t *);
+int	tegra_ahub_chan_alloc(device_t, u_int *);
+void	tegra_ahub_chan_free(device_t, u_int);
+int	tegra_ahub_chan_trigger(device_t, u_int, int, void *, void *, int,
+	    void (*)(void *), void *, const audio_params_t *);
+int	tegra_ahub_chan_halt(device_t, u_int, int);
+void *	tegra_ahub_chan_allocm(device_t, u_int, size_t);
+void	tegra_ahub_chan_freem(device_t, u_int, void *, size_t);
+paddr_t	tegra_ahub_chan_mappage(device_t, u_int, void *, off_t, int);
+
+void	tegra_ahub_route_i2s(device_t, u_int, u_int, u_int, u_int, bool);
+struct fdtbus_dma *tegra_ahub_chan_setup_dma(device_t, u_int, int,
+	    void (*)(void *), void *);
+bus_addr_t tegra_ahub_chan_vtophys(device_t, u_int, void *);
+
+device_t tegra_i2s_lookup(int);
+int	tegra_i2s_trigger(device_t, int, void *, void *, int,
+	    void (*)(void *), void *, const audio_params_t *);
+int	tegra_i2s_halt(device_t, int);
+void *	tegra_i2s_allocm(device_t, size_t);
+void	tegra_i2s_freem(device_t, void *, size_t);
+paddr_t	tegra_i2s_mappage(device_t, void *, off_t, int);
 
 struct videomode;
 int	tegra_dc_port(device_t);

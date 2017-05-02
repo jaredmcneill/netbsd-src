@@ -51,6 +51,7 @@ file	arch/arm/nvidia/tegra_fuse.c		tegra_fuse
 device	tegra124car: clk
 attach	tegra124car at fdt with tegra124_car
 file	arch/arm/nvidia/tegra124_car.c		tegra124_car
+defflag	opt_tegra.h				TEGRA124_CAR_DEBUG
 
 # GPIO controller
 device	tegragpio: gpiobus
@@ -123,6 +124,21 @@ file	arch/arm/nvidia/tegra_pcie.c		tegra_pcie
 # SATA
 attach	ahcisata at fdt with tegra_ahcisata
 file	arch/arm/nvidia/tegra_ahcisata.c	tegra_ahcisata
+
+# Audio Hub (AHUB)
+device	tegraahub { }: fdtbus
+attach	tegraahub at fdt with tegra_ahub
+file	arch/arm/nvidia/tegra_ahub.c		tegra_ahub
+
+# I2S controller
+device	tegrai2s
+attach	tegrai2s at tegraahub with tegra_i2s
+file	arch/arm/nvidia/tegra_i2s.c		tegra_i2s
+
+# Audio codecs
+device	tegracodec: audiobus, auconv, mulaw, aurateconv
+attach	tegracodec at fdt with tegra_codec
+file	arch/arm/nvidia/tegra_codec.c		tegra_codec
 
 # HDA
 attach	hdaudio at fdt with tegra_hdaudio

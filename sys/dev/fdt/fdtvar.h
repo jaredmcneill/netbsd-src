@@ -144,7 +144,6 @@ struct fdtbus_dma_req {
 	int dreq_nsegs;
 
 	bus_addr_t dreq_dev_phys;	/* Device */
-	int dreq_sel;			/* Device selector */
 
 	enum fdtbus_dma_dir dreq_dir;	/* Transfer direction */
 
@@ -236,6 +235,8 @@ int		fdtbus_get_stdout_phandle(void);
 int		fdtbus_get_stdout_speed(void);
 
 bool		fdtbus_status_okay(int);
+
+const char *	fdtbus_get_string(int, const char *);
 
 int		fdtbus_print(void *, const char *);
 
