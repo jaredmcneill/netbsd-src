@@ -225,12 +225,14 @@ tegra_i2s_transfer(struct tegra_i2s_stream *st)
 		.dreq_block_multi = 0,
 		.dreq_flow = 1,
 		.dreq_mem_opt = {
-			.opt_bus_width = 4,
-			.opt_burst_len = 4,
+			.opt_bus_width = 32,
+			.opt_burst_len = 32,
+			.opt_wrap_len = 0,
 		},
 		.dreq_dev_opt = {
-			.opt_bus_width = 4,
-			.opt_burst_len = 4,
+			.opt_bus_width = 32,
+			.opt_burst_len = 32,
+			.opt_wrap_len = 4,
 		},
 	};
 
