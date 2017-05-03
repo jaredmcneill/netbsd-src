@@ -71,6 +71,7 @@ struct tegra_apbdma_chan {
 	void			*ch_ih;
 	void			(*ch_cb)(void *);
 	void			*ch_cbarg;
+	u_int			ch_req;
 };
 
 struct tegra_apbdma_softc {
@@ -187,18 +188,23 @@ tegra_apbdma_acquire(device_t dev, const void *data, size_t len,
 {
 	struct tegra_apbdma_softc *sc = device_private(dev);
 	struct tegra_apbdma_chan *ch;
+	u_int n;
 	char intrstr[128];
 
-	if (len != 1)
+	if (len != 4)
 		return NULL;
 
-	const u_int n = be32dec(data);
-	if (n >= TEGRA_APBDMA_NCHAN)
+	const u_int req = be32dec(data);
+	if (req > __SHIFTOUT_MASK(APBDMACHAN_CSR_REQ_SEL))
 		return NULL;
 
-	ch = &sc->sc_chan[n];
-	if (ch->ch_ih != NULL) {
-		aprint_error_dev(dev, "dma channel %u is in use\n", n);
+	for (n = 0; n < TEGRA_APBDMA_NCHAN; n++) {
+		ch = &sc->sc_chan[n];
+		if (ch->ch_ih == NULL)
+			break;
+	}
+	if (n >= TEGRA_APBDMA_NCHAN) {
+		aprint_error_dev(dev, "no free DMA channel\n");
 		return NULL;
 	}
 
@@ -214,10 +220,12 @@ tegra_apbdma_acquire(device_t dev, const void *data, size_t len,
 		    intrstr);
 		return NULL;
 	}
-	aprint_normal_dev(dev, "interrupting on %s (channel %u)\n", intrstr, n);
+	aprint_normal_dev(dev, "interrupting on %s (channel %u, dreq %u)\n",
+	    intrstr, n, req);
 
 	ch->ch_cb = cb;
 	ch->ch_cbarg = cbarg;
+	ch->ch_req = req;
 
 	/* Unmask interrupts for this channel */
 	APBDMA_WRITE(sc, APBDMA_IRQ_MASK_SET_REG, __BIT(n));
@@ -271,7 +279,7 @@ tegra_apbdma_transfer(device_t dev, void *priv, struct fdtbus_dma_req *req)
 		return EINVAL;
 
 	/* DMA channel number */
-	csr |= __SHIFTIN(n, APBDMACHAN_CSR_REQ_SEL);
+	csr |= __SHIFTIN(ch->ch_req, APBDMACHAN_CSR_REQ_SEL);
 
 	/*
 	 * Set DMA transfer direction.

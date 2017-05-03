@@ -439,7 +439,7 @@ static int
 tegra_codec_round_blocksize(void *priv, int bs, int mode,
     const audio_params_t *params)
 {
-	return roundup(bs, TEGRA_CODEC_ALIGN);
+	return 4096;	/* XXX */
 }
 
 static void

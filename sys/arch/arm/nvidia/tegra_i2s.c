@@ -87,6 +87,8 @@ struct tegra_i2s_softc {
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 #define	I2S_WRITE(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+#define	I2S_SET_CLEAR(sc, reg, set, clr)				\
+	tegra_reg_set_clear((sc)->sc_bst, (sc)->sc_bsh, (reg), (set), (clr))
 
 CFATTACH_DECL_NEW(tegra_i2s, sizeof(struct tegra_i2s_softc),
 	tegra_i2s_match, tegra_i2s_attach, NULL, NULL);
@@ -113,6 +115,7 @@ tegra_i2s_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	int error, len;
+	uint32_t val;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -159,12 +162,16 @@ tegra_i2s_attach(device_t parent, device_t self, void *aux)
 	sc->sc_stream[0].st_dir = AUMODE_PLAY;
 	sc->sc_stream[0].st_dma = tegra_ahub_chan_setup_dma(sc->sc_ahub,
 	    sc->sc_ahub_chan, AUMODE_PLAY, tegra_i2s_intr, &sc->sc_stream[0]);
+	sc->sc_stream[0].st_fifo = tegra_ahub_chan_fifo(sc->sc_ahub,
+	    sc->sc_ahub_chan, AUMODE_PLAY);
 
 	sc->sc_stream[1].st_sc = sc;
 	sc->sc_stream[1].st_dir = AUMODE_RECORD;
 #if 0
 	sc->sc_stream[1].st_dma = tegra_ahub_chan_setup_dma(sc->sc_ahub,
 	    sc->sc_ahub_chan, AUMODE_RECORD, tegra_i2s_intr, &sc->sc_stream[1]);
+	sc->sc_stream[1].st_fifo = tegra_ahub_chan_fifo(sc->sc_ahub,
+	    sc->sc_ahub_chan, AUMODE_RECORD);
 #endif
 
 	len = OF_getprop(phandle, "nvidia,ahub-cif-ids", sc->sc_cif_ids,
@@ -183,6 +190,46 @@ tegra_i2s_attach(device_t parent, device_t self, void *aux)
 	/* Setup bi-directional route between APBIF and this I2S instance */
 	tegra_ahub_route_i2s(sc->sc_ahub, sc->sc_ahub_chan, sc->sc_i2s_chan,
 	    sc->sc_cif_ids[0], sc->sc_cif_ids[1], true);
+
+	/* XXX I2S bit format settings. These are codec dependent. */
+	val = I2S_CTRL_MASTER;
+	val |= __SHIFTIN(I2S_CTRL_FRAME_FORMAT_LRCK_MODE,
+			 I2S_CTRL_FRAME_FORMAT);
+	val |= __SHIFTIN(I2S_CTRL_BIT_CODE_LINEAR, I2S_CTRL_BIT_CODE);
+	val |= __SHIFTIN(I2S_CTRL_BIT_SIZE_16, I2S_CTRL_BIT_SIZE);
+	I2S_WRITE(sc, I2S_CTRL_REG, val);
+
+	I2S_WRITE(sc, I2S_OFFSET_REG,
+	    __SHIFTIN(1, I2S_OFFSET_RX_DATA_OFFSET) |
+	    __SHIFTIN(1, I2S_OFFSET_TX_DATA_OFFSET));
+}
+
+static int
+tegra_i2s_set_timings(struct tegra_i2s_softc *sc, const audio_params_t *params)
+{
+	int bit_cnt, error;
+	uint32_t val;
+	u_int rate;
+
+	rate = params->sample_rate * params->channels * params->precision * 2;
+	bit_cnt = (rate / (2 * params->sample_rate)) - 1;
+
+	aprint_normal_dev(sc->sc_dev, "set rate %u Hz\n", rate);
+	error = clk_set_rate(sc->sc_clk, rate);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't set i2s rate (%d)\n",
+		    error);
+		return error;
+	}
+	aprint_normal_dev(sc->sc_dev, "get rate %u Hz\n", clk_get_rate(sc->sc_clk));
+
+	val = __SHIFTIN(bit_cnt, I2S_TIMING_CHANNEL_BIT_CNT);
+	if ((rate % (2 * params->sample_rate)) != 0)
+		val |= I2S_TIMING_NON_SYM_EN;
+
+	I2S_WRITE(sc, I2S_TIMING_REG, val);
+
+	return 0;
 }
 
 static int
@@ -190,8 +237,8 @@ tegra_i2s_set_audiocif(struct tegra_i2s_softc *sc, int dir,
     const audio_params_t *params)
 {
 	bus_size_t reg = dir == AUMODE_PLAY ?
-	    I2S_AUDIOCIF_I2STX_CTRL_REG : I2S_AUDIOCIF_I2SRX_CTRL_REG;
-	int cifdir = dir == AUMODE_PLAY ? AUDIOCIF_DIR_TX : AUDIOCIF_DIR_RX;
+	    I2S_AUDIOCIF_I2SRX_CTRL_REG : I2S_AUDIOCIF_I2STX_CTRL_REG;
+	int cifdir = dir == AUMODE_PLAY ? AUDIOCIF_DIR_RX : AUDIOCIF_DIR_TX;
 	uint32_t cif;
 	int error;
 
@@ -218,7 +265,7 @@ tegra_i2s_transfer(struct tegra_i2s_stream *st)
 	struct fdtbus_dma_req dreq = {
 		.dreq_segs = &seg,
 		.dreq_nsegs = 1,
-		.dreq_dev_phys = st->st_cur,
+		.dreq_dev_phys = st->st_fifo,
 		.dreq_dir = st->st_dir == AUMODE_PLAY ?
 		    FDT_DMA_WRITE : FDT_DMA_READ,
 		.dreq_block_irq = 1,
@@ -291,6 +338,8 @@ tegra_i2s_trigger(device_t dev, int dir, void *start, void *end, int blksize,
 	struct tegra_i2s_softc * const sc = device_private(dev);
 	struct tegra_i2s_stream * const st = dir == AUMODE_PLAY ?
 	    &sc->sc_stream[0] : &sc->sc_stream[1];
+	const uint32_t enable_bit = dir == AUMODE_PLAY ?
+	    I2S_CTRL_XFER_EN_TX : I2S_CTRL_XFER_EN_RX;
 	bus_addr_t pstart;
 	bus_size_t psize;
 	int error;
@@ -304,6 +353,10 @@ tegra_i2s_trigger(device_t dev, int dir, void *start, void *end, int blksize,
 		return EINVAL;
 	}
 	psize = (uintptr_t)end - (uintptr_t)start;
+
+	error = tegra_i2s_set_timings(sc, params);
+	if (error)
+		return error;
 
 	error = tegra_i2s_set_audiocif(sc, dir, params);
 	if (error)
@@ -321,6 +374,8 @@ tegra_i2s_trigger(device_t dev, int dir, void *start, void *end, int blksize,
 	if (error)
 		return error;
 
+	I2S_SET_CLEAR(sc, I2S_CTRL_REG, enable_bit, 0);
+
 	return tegra_i2s_transfer(st);
 }
 
@@ -330,9 +385,13 @@ tegra_i2s_halt(device_t dev, int dir)
 	struct tegra_i2s_softc * const sc = device_private(dev);
 	struct tegra_i2s_stream * const st = dir == AUMODE_PLAY ?
 	    &sc->sc_stream[0] : &sc->sc_stream[1];
+	const uint32_t enable_bit = dir == AUMODE_PLAY ?
+	    I2S_CTRL_XFER_EN_TX : I2S_CTRL_XFER_EN_RX;
 
 	if (st->st_dma)
 		fdtbus_dma_halt(st->st_dma);
+
+	I2S_SET_CLEAR(sc, I2S_CTRL_REG, 0, enable_bit);
 
 	return tegra_ahub_chan_halt(sc->sc_ahub, sc->sc_ahub_chan, dir);
 }

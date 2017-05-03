@@ -67,11 +67,8 @@ static void	alc56xx_attach(device_t, device_t, void *);
 
 static int	alc56xx_read(struct alc56xx_softc *, uint8_t, uint16_t *);
 static int	alc56xx_write(struct alc56xx_softc *, uint8_t, uint16_t);
-
-#if 0
 static int	alc56xx_set_clear(struct alc56xx_softc *, uint8_t, uint16_t,
 				  uint16_t);
-#endif
 
 CFATTACH_DECL_NEW(alc56xx, sizeof(struct alc56xx_softc),
     alc56xx_match, alc56xx_attach, NULL, NULL);
@@ -139,7 +136,6 @@ alc56xx_write(struct alc56xx_softc *sc, uint8_t reg, uint16_t val)
 	    NULL, 0, buf, sizeof(buf), I2C_F_POLL);
 }
 
-#if 0
 static int
 alc56xx_set_clear(struct alc56xx_softc *sc, uint8_t reg, uint16_t set,
     uint16_t clr)
@@ -155,7 +151,6 @@ alc56xx_set_clear(struct alc56xx_softc *sc, uint8_t reg, uint16_t set,
 
 	return alc56xx_write(sc, reg, new);
 }
-#endif
 
 device_t
 alc56xx_lookup(int phandle)
@@ -206,9 +201,20 @@ alc56xx_start(device_t dev)
 
 	aprint_debug_dev(dev, "DEVICE_ID %04x, VENDOR_ID %04x\n", did, vid);
 
-	/* S/W reset */
 	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+
+	/* S/W reset */
 	alc56xx_write(sc, MX_DEVICE_ID_REG, 0);
+
+	/* Set system clock source to MCLK */
+	alc56xx_write(sc, MX_GLOBAL_CLOCK_CTRL_REG,
+	    __SHIFTIN(MX_GLOBAL_CLOCK_CTRL_MUX_MCLK, MX_GLOBAL_CLOCK_CTRL_MUX));
+
+	/* Enable input clock and MCLK detection, and IN1/IN2 input controls */
+	alc56xx_set_clear(sc, MX_GEN_CTRL1_REG,
+	    MX_GEN_CTRL1_MCLK_DET | MX_GEN_CTRL1_CLK_GATE |
+	    MX_GEN_CTRL1_EN_IN1_SE | MX_GEN_CTRL1_EN_IN2_SE, 0);
+
 	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
 
 	return 0;

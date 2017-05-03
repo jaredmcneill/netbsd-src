@@ -722,6 +722,11 @@ struct tegra124_init_parent {
 	{ "host1x",		"pll_p_out0" },
 	{ "extern1",		"pll_a_out0" },
 	{ "d_audio",		"pll_a_out0" },
+	{ "i2s0",		"pll_a_out0" },
+	{ "i2s1",		"pll_a_out0" },
+	{ "i2s2",		"pll_a_out0" },
+	{ "i2s3",		"pll_a_out0" },
+	{ "i2s4",		"pll_a_out0" },
 };
 
 struct tegra124_init_rate {
@@ -858,7 +863,7 @@ tegra124_car_init(struct tegra124_car_softc *sc)
 	tegra124_car_xusb_init(sc);
 	tegra124_car_watchdog_init(sc);
 
-#ifdef TEGRA_CLOCK_DEBUG
+#ifdef TEGRA124_CAR_DEBUG
 	device_printf(sc->sc_dev, "%16s %16s   %s\n",
 	    "CLOCK", "PARENT", "RATE");
 	device_printf(sc->sc_dev, "%16s %16s   %s\n",

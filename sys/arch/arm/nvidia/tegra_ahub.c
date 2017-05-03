@@ -75,6 +75,8 @@ struct tegra_ahub_softc {
 	int			sc_phandle;
 	kmutex_t		sc_lock;
 
+	bus_addr_t		sc_addr[AHUB_NRES];
+
 	void			*sc_ih;
 
 	struct clk		*sc_clk_d_audio;
@@ -156,6 +158,7 @@ tegra_ahub_attach(device_t parent, device_t self, void *aux)
 			    (uint64_t)addr[n], error);
 			return;
 		}
+		sc->sc_addr[n] = addr[n];
 	}
 	for (n = 0; n < AHUB_NCHAN; n++)
 		LIST_INIT(&sc->sc_dmalist[n]);
@@ -399,6 +402,21 @@ tegra_ahub_chan_vtophys(device_t dev, u_int chan, void *addr)
 	return -1;
 }
 
+bus_addr_t
+tegra_ahub_chan_fifo(device_t dev, u_int chan, int dir)
+{
+	struct tegra_ahub_softc * const sc = device_private(dev);
+	bus_addr_t fifo;
+
+	fifo = sc->sc_addr[AHUB_RES_APBIF];
+	if (dir == AUMODE_PLAY)
+		fifo += APBIF_CHANNELn_TXFIFO_REG(chan);
+	else
+		fifo += APBIF_CHANNELn_RXFIFO_REG(chan);
+
+	return fifo;
+}
+
 int
 tegra_ahub_chan_alloc(device_t dev, u_int *chan)
 {
@@ -487,8 +505,13 @@ tegra_ahub_route_i2s(device_t dev, u_int apbif_chan, u_int i2s_chan,
 {
 	struct tegra_ahub_softc * const sc = device_private(dev);
 	const uint32_t play_mask = 1 << play_cif;
+#if 0
 	const uint32_t rec_mask = 1 << rec_cif;
+#endif
 	uint32_t val;
+
+	device_printf(dev, "%s: apbif=%u i2s=%u play_cif=%u rec_cif=%u\n",
+	    __func__, apbif_chan, i2s_chan, play_cif, rec_cif);
 
 	mutex_enter(&sc->sc_lock);
 
@@ -500,6 +523,7 @@ tegra_ahub_route_i2s(device_t dev, u_int apbif_chan, u_int i2s_chan,
 		val &= ~play_mask;
 	XBAR_WRITE(sc, AUDIO_I2S_RX0_REG(i2s_chan), val);
 
+#if 0
 	/* Capture: I2S TX to APBIF RX */
 	val = XBAR_READ(sc, AUDIO_APBIF_RXn_REG(apbif_chan));
 	if (enable)
@@ -507,6 +531,7 @@ tegra_ahub_route_i2s(device_t dev, u_int apbif_chan, u_int i2s_chan,
 	else
 		val &= ~rec_mask;
 	XBAR_WRITE(sc, AUDIO_APBIF_RXn_REG(apbif_chan), val);
+#endif
 
 	mutex_exit(&sc->sc_lock);
 }

@@ -110,6 +110,7 @@ void	tegra_ahub_route_i2s(device_t, u_int, u_int, u_int, u_int, bool);
 struct fdtbus_dma *tegra_ahub_chan_setup_dma(device_t, u_int, int,
 	    void (*)(void *), void *);
 bus_addr_t tegra_ahub_chan_vtophys(device_t, u_int, void *);
+bus_addr_t tegra_ahub_chan_fifo(device_t, u_int, int);
 
 device_t tegra_i2s_lookup(int);
 int	tegra_i2s_trigger(device_t, int, void *, void *, int,
