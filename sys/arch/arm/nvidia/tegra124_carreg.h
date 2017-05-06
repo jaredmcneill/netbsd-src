@@ -40,6 +40,9 @@
 #define CAR_CLK_OUT_ENB_H_REG	0x14
 #define CAR_CLK_OUT_ENB_U_REG	0x18
 
+#define CAR_OSC_CTRL_REG	0x50
+#define CAR_OSC_CTRL_PLL_REF_DIV	__BITS(27,26)
+
 #define CAR_PLL_LFSR_REG	0x54
 #define CAR_PLL_LFSR_RND		__BITS(15,0)
 

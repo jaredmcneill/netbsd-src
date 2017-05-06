@@ -434,23 +434,26 @@ static const char *mux_extern_p[] =
 	{ "pll_a_out0", "clk_s", "pll_p_out0", "clk_m", "pll_e_out0" };
 
 static struct tegra_clk tegra124_car_clocks[] = {
-	CLK_FIXED("clk_m", TEGRA_REF_FREQ),
+	CLK_FIXED("osc", TEGRA_REF_FREQ),
+	CLK_FIXED_DIV("clk_m", "osc", 1),
+	CLK_DIV("pll_ref", "osc",
+		CAR_OSC_CTRL_REG, CAR_OSC_CTRL_PLL_REF_DIV),
 
-	CLK_PLL("pll_p", "clk_m", CAR_PLLP_BASE_REG,
+	CLK_PLL("pll_p", "pll_ref", CAR_PLLP_BASE_REG,
 		CAR_PLLP_BASE_DIVM, CAR_PLLP_BASE_DIVN, CAR_PLLP_BASE_DIVP),
-	CLK_PLL("pll_c", "clk_m", CAR_PLLC_BASE_REG,
+	CLK_PLL("pll_c", "pll_ref", CAR_PLLC_BASE_REG,
 		CAR_PLLC_BASE_DIVM, CAR_PLLC_BASE_DIVN, CAR_PLLC_BASE_DIVP),
-	CLK_PLL("pll_u", "clk_m", CAR_PLLU_BASE_REG,
+	CLK_PLL("pll_u", "pll_ref", CAR_PLLU_BASE_REG,
 		CAR_PLLU_BASE_DIVM, CAR_PLLU_BASE_DIVN, CAR_PLLU_BASE_VCO_FREQ),
-	CLK_PLL("pll_x", "clk_m", CAR_PLLX_BASE_REG,
+	CLK_PLL("pll_x", "pll_ref", CAR_PLLX_BASE_REG,
 		CAR_PLLX_BASE_DIVM, CAR_PLLX_BASE_DIVN, CAR_PLLX_BASE_DIVP),
-	CLK_PLL("pll_e", "clk_m", CAR_PLLE_BASE_REG,
+	CLK_PLL("pll_e", "pll_ref", CAR_PLLE_BASE_REG,
 		CAR_PLLE_BASE_DIVM, CAR_PLLE_BASE_DIVN, CAR_PLLE_BASE_DIVP_CML),
-	CLK_PLL("pll_d", "clk_m", CAR_PLLD_BASE_REG,
+	CLK_PLL("pll_d", "pll_ref", CAR_PLLD_BASE_REG,
 		CAR_PLLD_BASE_DIVM, CAR_PLLD_BASE_DIVN, CAR_PLLD_BASE_DIVP),
-	CLK_PLL("pll_d2", "clk_m", CAR_PLLD2_BASE_REG,
+	CLK_PLL("pll_d2", "pll_ref", CAR_PLLD2_BASE_REG,
 		CAR_PLLD2_BASE_DIVM, CAR_PLLD2_BASE_DIVN, CAR_PLLD2_BASE_DIVP),
-	CLK_PLL("pll_re", "clk_m", CAR_PLLREFE_BASE_REG,
+	CLK_PLL("pll_re", "pll_ref", CAR_PLLREFE_BASE_REG,
 		CAR_PLLREFE_BASE_DIVM, CAR_PLLREFE_BASE_DIVN, CAR_PLLREFE_BASE_DIVP),
 
 	CLK_DIV("pll_p_out1", "pll_p",
@@ -1400,6 +1403,9 @@ tegra124_car_clock_get_rate_div(struct tegra124_car_softc *sc,
 	const u_int raw_div = __SHIFTOUT(v, tdiv->bits);
 
 	switch (tdiv->reg) {
+	case CAR_OSC_CTRL_REG:
+		rate = parent_rate / (1 << raw_div);
+		break;
 	case CAR_CLKSRC_I2C1_REG:
 	case CAR_CLKSRC_I2C2_REG:
 	case CAR_CLKSRC_I2C3_REG:
@@ -1451,6 +1457,8 @@ tegra124_car_clock_set_rate_div(struct tegra124_car_softc *sc,
 	raw_div = __SHIFTOUT(tdiv->bits, tdiv->bits);
 
 	switch (tdiv->reg) {
+	case CAR_OSC_CTRL_REG:
+		return EINVAL;
 	case CAR_CLKSRC_UARTA_REG:
 	case CAR_CLKSRC_UARTB_REG:
 	case CAR_CLKSRC_UARTC_REG:
