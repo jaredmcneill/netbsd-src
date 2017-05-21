@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.343 2017/03/15 20:25:41 christos Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.349 2017/05/20 07:27:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,9 +66,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.343 2017/03/15 20:25:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.349 2017/05/20 07:27:15 chs Exp $");
 
 #include "opt_ddb.h"
+#include "opt_pax.h"
 #include "opt_uvmhist.h"
 #include "opt_uvm.h"
 #include "opt_sysv.h"
@@ -80,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.343 2017/03/15 20:25:41 christos Exp $
 #include <sys/pool.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
+#include <sys/pax.h>
 #include <sys/vnode.h>
 #include <sys/filedesc.h>
 #include <sys/lockdebug.h>
@@ -1064,8 +1066,11 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 
 #ifndef __USER_VA0_IS_SAFE
 	if ((flags & UVM_FLAG_FIXED) && *startp == 0 &&
-	    !VM_MAP_IS_KERNEL(map) && user_va0_disable)
+	    !VM_MAP_IS_KERNEL(map) && user_va0_disable) {
+		uprintf("%s: process wants to map virtual address 0; see "
+		    "vm.user_va0_disable in sysctl(7).\n", __func__);
 		return EACCES;
+	}
 #endif
 
 	/*
@@ -1158,8 +1163,26 @@ retry:
 		}
 		vm_map_lock(map); /* could sleep here */
 	}
-	prev_entry = uvm_map_findspace(map, start, size, &start,
-	    uobj, uoffset, align, flags);
+	if (flags & UVM_FLAG_UNMAP) {
+		KASSERT(flags & UVM_FLAG_FIXED);
+		KASSERT((flags & UVM_FLAG_NOWAIT) == 0);
+
+		/*
+		 * Set prev_entry to what it will need to be after any existing
+		 * entries are removed later in uvm_map_enter().
+		 */
+
+		if (uvm_map_lookup_entry(map, start, &prev_entry)) {
+			if (start == prev_entry->start)
+				prev_entry = prev_entry->prev;
+			else
+				UVM_MAP_CLIP_END(map, prev_entry, start);
+			SAVE_HINT(map, map->hint, prev_entry);
+		}
+	} else {
+		prev_entry = uvm_map_findspace(map, start, size, &start,
+		    uobj, uoffset, align, flags);
+	}
 	if (prev_entry == NULL) {
 		unsigned int timestamp;
 
@@ -1250,7 +1273,7 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
     struct vm_map_entry *new_entry)
 {
 	struct vm_map_entry *prev_entry = args->uma_prev;
-	struct vm_map_entry *dead = NULL;
+	struct vm_map_entry *dead = NULL, *dead_entries = NULL;
 
 	const uvm_flag_t flags = args->uma_flags;
 	const vm_prot_t prot = UVM_PROTECTION(flags);
@@ -1279,6 +1302,8 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 
 	KASSERT(map->hint == prev_entry); /* bimerge case assumes this */
 	KASSERT(vm_map_locked_p(map));
+	KASSERT((flags & (UVM_FLAG_NOWAIT | UVM_FLAG_UNMAP)) !=
+		(UVM_FLAG_NOWAIT | UVM_FLAG_UNMAP));
 
 	if (uobj)
 		newetype = UVM_ET_OBJ;
@@ -1289,6 +1314,28 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 		newetype |= UVM_ET_COPYONWRITE;
 		if ((flags & UVM_FLAG_OVERLAY) == 0)
 			newetype |= UVM_ET_NEEDSCOPY;
+	}
+
+	/*
+	 * For mappings with unmap, remove any old entries now.  Adding the new
+	 * entry cannot fail because that can only happen if UVM_FLAG_NOWAIT
+	 * is set, and we do not support nowait and unmap together.
+	 */
+
+	if (flags & UVM_FLAG_UNMAP) {
+		KASSERT(flags & UVM_FLAG_FIXED);
+		uvm_unmap_remove(map, start, start + size, &dead_entries, 0);
+#ifdef DEBUG
+		struct vm_map_entry *tmp_entry;
+		bool rv;
+
+		rv = uvm_map_lookup_entry(map, start, &tmp_entry);
+		KASSERT(!rv);
+		KASSERTMSG(prev_entry == tmp_entry,
+			   "args %p prev_entry %p tmp_entry %p",
+			   args, prev_entry, tmp_entry);
+#endif
+		SAVE_HINT(map, map->hint, prev_entry);
 	}
 
 	/*
@@ -1564,17 +1611,19 @@ nomerge:
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
 
 	error = 0;
+
 done:
 	vm_map_unlock(map);
 
 	if (new_entry) {
 		uvm_mapent_free(new_entry);
 	}
-
 	if (dead) {
 		KDASSERT(merged);
 		uvm_mapent_free(dead);
 	}
+	if (dead_entries)
+		uvm_unmap_detach(dead_entries, 0);
 
 	return error;
 }
@@ -2949,6 +2998,24 @@ uvm_map_submap(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 	return error;
 }
+
+/*
+ * uvm_map_protect_user: change map protection on behalf of the user.
+ * Enforces PAX settings as necessary.
+ */
+int
+uvm_map_protect_user(struct lwp *l, vaddr_t start, vaddr_t end,
+    vm_prot_t new_prot)
+{
+	int error;
+
+	if ((error = PAX_MPROTECT_VALIDATE(l, new_prot)))
+		return error;
+
+	return uvm_map_protect(&l->l_proc->p_vmspace->vm_map, start, end,
+	    new_prot, false);
+}
+
 
 /*
  * uvm_map_protect: change map protection

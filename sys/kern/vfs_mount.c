@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.58 2017/04/17 08:34:27 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.62 2017/05/17 12:45:03 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.58 2017/04/17 08:34:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.62 2017/05/17 12:45:03 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -148,6 +148,8 @@ struct mount *
 vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 {
 	struct mount *mp;
+	int error __diagused;
+	extern struct vfsops dead_vfsops;
 
 	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
 	if (mp == NULL)
@@ -161,6 +163,10 @@ vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
 	mp->mnt_vnodecovered = vp;
 	mount_initspecific(mp);
+	if (vfsops != &dead_vfsops) {
+		error = fstrans_mount(mp);
+		KASSERT(error == 0);
+	}
 
 	mutex_enter(&mountgen_lock);
 	mp->mnt_gen = mountgen++;
@@ -318,12 +324,19 @@ _vfs_busy(struct mount *mp, bool wait)
 	KASSERT(mp->mnt_refcnt > 0);
 
 	if (wait) {
+		fstrans_start(mp, FSTRANS_SHARED);
 		mutex_enter(&mp->mnt_unmounting);
-	} else if (!mutex_tryenter(&mp->mnt_unmounting)) {
-		return EBUSY;
+	} else {
+		if (fstrans_start_nowait(mp, FSTRANS_SHARED))
+			return EBUSY;
+		if (!mutex_tryenter(&mp->mnt_unmounting)) {
+			fstrans_done(mp);
+			return EBUSY;
+		}
 	}
 	if (__predict_false((mp->mnt_iflag & IMNT_GONE) != 0)) {
 		mutex_exit(&mp->mnt_unmounting);
+		fstrans_done(mp);
 		return ENOENT;
 	}
 	++mp->mnt_busynest;
@@ -351,9 +364,6 @@ vfs_trybusy(struct mount *mp)
  * Unbusy a busy filesystem.
  *
  * Every successful vfs_busy() call must be undone by a vfs_unbusy() call.
- *
- * => If keepref is true, preserve reference added by vfs_busy().
- * => If nextp != NULL, acquire mountlist_lock.
  */
 void
 vfs_unbusy(struct mount *mp)
@@ -365,6 +375,7 @@ vfs_unbusy(struct mount *mp)
 	KASSERT(mp->mnt_busynest != 0);
 	mp->mnt_busynest--;
 	mutex_exit(&mp->mnt_unmounting);
+	fstrans_done(mp);
 	vfs_rele(mp);
 }
 
@@ -588,7 +599,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 		 * First, flush out any vnode references from the
 		 * deferred vrele list.
 		 */
-		vfs_drainvnodes();
+		vrele_flush(mp);
 
 		vfs_vnode_iterator_init(mp, &marker);
 
@@ -738,11 +749,6 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 		return ENOMEM;
 	}
 
-	if ((error = fstrans_mount(mp)) != 0) {
-		vfs_rele(mp);
-		return error;
-	}
-
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
 
 	/*
@@ -869,6 +875,12 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	 */
 	mutex_enter(&syncer_mutex);
 
+	error = vfs_suspend(mp, 0);
+	if (error) {
+		mutex_exit(&syncer_mutex);
+		return error;
+	}
+
 	/*
 	 * Abort unmount attempt when the filesystem is in use
 	 */
@@ -876,6 +888,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	if (mp->mnt_busynest != 0) {
 		mutex_exit(&mp->mnt_unmounting);
 		mutex_exit(&syncer_mutex);
+		vfs_resume(mp);
 		return EBUSY;
 	}
 
@@ -927,6 +940,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 			vfs_syncer_add_to_worklist(mp);
 		mp->mnt_flag |= async;
 		mutex_exit(&mp->mnt_updating);
+		vfs_resume(mp);
 		if (used_syncer)
 			mutex_exit(&syncer_mutex);
 		if (used_extattr) {
@@ -949,6 +963,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	 */
 	mp->mnt_iflag |= IMNT_GONE;
 	mutex_exit(&mp->mnt_unmounting);
+	vfs_resume(mp);
 
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
 		vn_lock(coveredvp, LK_EXCLUSIVE | LK_RETRY);
@@ -1274,8 +1289,6 @@ done:
 
 		mp->mnt_flag |= MNT_ROOTFS;
 		mp->mnt_op->vfs_refcount++;
-		error = fstrans_mount(mp);
-		KASSERT(error == 0);
 
 		/*
 		 * Get the vnode for '/'.  Set cwdi0.cwdi_cdir to
