@@ -191,3 +191,18 @@ tegra_pmc_hdmi_enable(void)
 	tegra_reg_set_clear(bst, bsh, PMC_IO_DPD2_STATUS_REG,
 	    0, PMC_IO_DPD2_STATUS_HV);
 }
+
+void
+tegra_pmc_clk1_enable(void)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+
+	tegra_pmc_get_bs(&bst, &bsh);
+
+	tegra_reg_set_clear(bst, bsh, PMC_CLK_OUT_CNTRL_REG,
+	    __SHIFTIN(PMC_CLK_OUT_CNTRL_CLK1_SRC_SEL_CAR,
+		      PMC_CLK_OUT_CNTRL_CLK1_SRC_SEL) |
+	    PMC_CLK_OUT_CNTRL_CLK1_FORCE_EN,
+	    PMC_CLK_OUT_CNTRL_CLK1_SRC_SEL);
+}

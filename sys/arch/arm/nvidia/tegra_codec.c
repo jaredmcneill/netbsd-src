@@ -166,6 +166,9 @@ tegra_codec_rt5640_init(struct tegra_codec_softc *sc)
 		return ENXIO;
 	}
 
+	/* Enable dap_mclk1_out clock output */
+	tegra_pmc_clk1_enable();
+
 	error = alc56xx_start(sc->sc_codec);
 	if (error)
 		return error;

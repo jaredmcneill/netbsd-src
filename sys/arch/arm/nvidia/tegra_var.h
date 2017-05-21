@@ -85,6 +85,7 @@ void	tegra_pmc_reset(void);
 void	tegra_pmc_power(u_int, bool);
 void	tegra_pmc_remove_clamping(u_int);
 void	tegra_pmc_hdmi_enable(void);
+void	tegra_pmc_clk1_enable(void);
 
 uint32_t tegra_fuse_read(u_int);
 
