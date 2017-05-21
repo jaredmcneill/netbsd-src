@@ -257,6 +257,18 @@ tegra_ahub_init_clocks(struct tegra_ahub_softc *sc)
 static int
 tegra_ahub_intr(void *priv)
 {
+	struct tegra_ahub_softc * const sc = priv;
+	char buf[128];
+	uint32_t val;
+
+	val = APBIF_READ(sc, APBIF_I2S_INT_STATUS_REG);
+	if (val) {
+		snprintb(buf, sizeof(buf), APBIF_I2S_INT_BITS, val);
+		device_printf(sc->sc_dev, "I2S IRQ %s\n", buf);
+
+		APBIF_WRITE(sc, APBIF_I2S_INT_STATUS_REG, val);
+	}
+
 	return 1;
 }
 
@@ -421,6 +433,7 @@ int
 tegra_ahub_chan_alloc(device_t dev, u_int *chan)
 {
 	struct tegra_ahub_softc * const sc = device_private(dev);
+	uint32_t val;
 	u_int n;
 
 	mutex_enter(&sc->sc_lock);
@@ -430,15 +443,20 @@ tegra_ahub_chan_alloc(device_t dev, u_int *chan)
 			*chan = n;
 			sc->sc_chan_mask |= mask;
 
-			APBIF_WRITE(sc, APBIF_CHANNELn_CTRL_REG(n),
-			    APBIF_CHANNEL_CTRL_TX_PACK_EN |
-			    APBIF_CHANNEL_CTRL_RX_PACK_EN |
-			    __SHIFTIN(APBIF_CHANNEL_CTRL_PACK_16,
-				      APBIF_CHANNEL_CTRL_TX_PACK) |
-			    __SHIFTIN(APBIF_CHANNEL_CTRL_PACK_16,
-				      APBIF_CHANNEL_CTRL_RX_PACK) |
-			    __SHIFTIN(7, APBIF_CHANNEL_CTRL_TX_THRESHOLD) |
-			    __SHIFTIN(7, APBIF_CHANNEL_CTRL_RX_THRESHOLD));
+			val = APBIF_READ(sc, APBIF_CHANNELn_CTRL_REG(n));
+			val &= ~APBIF_CHANNEL_CTRL_TX_PACK;
+			val &= ~APBIF_CHANNEL_CTRL_RX_PACK;
+			val &= ~APBIF_CHANNEL_CTRL_TX_THRESHOLD;
+			val &= ~APBIF_CHANNEL_CTRL_RX_THRESHOLD;
+			val |= APBIF_CHANNEL_CTRL_TX_PACK_EN;
+			val |= APBIF_CHANNEL_CTRL_RX_PACK_EN;
+			val |= __SHIFTIN(APBIF_CHANNEL_CTRL_PACK_16,
+					 APBIF_CHANNEL_CTRL_TX_PACK);
+			val |= __SHIFTIN(APBIF_CHANNEL_CTRL_PACK_16,
+					 APBIF_CHANNEL_CTRL_RX_PACK);
+			val |= __SHIFTIN(7, APBIF_CHANNEL_CTRL_TX_THRESHOLD);
+			val |= __SHIFTIN(7, APBIF_CHANNEL_CTRL_RX_THRESHOLD);
+			APBIF_WRITE(sc, APBIF_CHANNELn_CTRL_REG(n), val);
 
 			break;
 		}
@@ -504,7 +522,7 @@ tegra_ahub_route_i2s(device_t dev, u_int apbif_chan, u_int i2s_chan,
     u_int play_cif, u_int rec_cif, bool enable)
 {
 	struct tegra_ahub_softc * const sc = device_private(dev);
-	const uint32_t play_mask = 1 << play_cif;
+	const uint32_t play_mask = 1 << apbif_chan;
 #if 0
 	const uint32_t rec_mask = 1 << rec_cif;
 #endif
@@ -532,6 +550,15 @@ tegra_ahub_route_i2s(device_t dev, u_int apbif_chan, u_int i2s_chan,
 		val &= ~rec_mask;
 	XBAR_WRITE(sc, AUDIO_APBIF_RXn_REG(apbif_chan), val);
 #endif
+
+	/* Enable interrupts for i2s device */
+	val = APBIF_READ(sc, APBIF_I2S_INT_MASK_REG);
+	val |= APBIF_I2S_INT_TX_DONE(i2s_chan);
+	val |= APBIF_I2S_INT_RX_DONE(i2s_chan);
+	val |= APBIF_I2S_INT_RXCIF_UNDERRUN(i2s_chan);
+	val |= APBIF_I2S_INT_TXCIF_OVERRUN(i2s_chan);
+	val |= APBIF_I2S_INT_FLOW_CTL_INT(i2s_chan);
+	APBIF_WRITE(sc, APBIF_I2S_INT_MASK_REG, val);
 
 	mutex_exit(&sc->sc_lock);
 }

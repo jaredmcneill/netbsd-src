@@ -1152,6 +1152,11 @@ tegra124_car_clock_get_rate_pll(struct tegra124_car_softc *sc,
 	}
 
 	rate = (uint64_t)rate_parent * divn;
+
+	/* XXX */
+	if (tpll->base_reg == CAR_PLLA_BASE_REG)
+		rate *= 2;
+
 	return rate / (divm << divp);
 }
 
@@ -1270,6 +1275,10 @@ tegra124_car_clock_set_rate_pll(struct tegra124_car_softc *sc,
 
 			delay(300);
 
+			/* Enable PLLA out0 */
+			tegra_reg_set_clear(bst, bsh, CAR_PLLA_OUT_REG,
+			    CAR_PLLA_OUT_RSTN, 0);
+
 			return 0;
 		}
 
@@ -1331,6 +1340,12 @@ tegra124_car_clock_set_parent_mux(struct tegra124_car_softc *sc,
 
 	v = bus_space_read_4(bst, bsh, tmux->reg);
 	v &= ~tmux->bits;
+
+	if (tmux->reg == CAR_CLKSRC_AUDIO_REG &&
+	    src == CAR_CLKSRC_AUDIO_SRC_PLLA_OUT0) {
+		v &= ~0xe01f0000;	/* XXX */
+	}
+
 	v |= __SHIFTIN(src, tmux->bits);
 	bus_space_write_4(bst, bsh, tmux->reg, v);
 
@@ -1489,6 +1504,7 @@ tegra124_car_clock_set_rate_div(struct tegra124_car_softc *sc,
 		if (rate)
 			raw_div = parent_rate / rate - 1;
 		break;
+	case CAR_PLLA_OUT_REG:
 	case CAR_CLKSRC_SDMMC1_REG:
 	case CAR_CLKSRC_SDMMC2_REG:
 	case CAR_CLKSRC_SDMMC3_REG:

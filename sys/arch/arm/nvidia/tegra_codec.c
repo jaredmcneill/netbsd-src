@@ -156,10 +156,11 @@ tegra_codec_rt5640_codec_lookup(int phandle)
 static int
 tegra_codec_rt5640_init(struct tegra_codec_softc *sc)
 {
+	const int sample_rate = 48000;
 	int error;
 
 	if (clk_set_rate_enable(sc->sc_clk_pll_a, 368640000) != 0 ||
-	    clk_set_rate_enable(sc->sc_clk_pll_a_out0, 256 * 48000) != 0 ||
+	    clk_set_rate_enable(sc->sc_clk_pll_a_out0, 256 * sample_rate) != 0 ||
 	    clk_enable(sc->sc_clk_mclk) != 0) {
 		aprint_error_dev(sc->sc_dev, "failed to setup clocks\n");
 		return ENXIO;
@@ -176,15 +177,37 @@ tegra_codec_rt5640_init(struct tegra_codec_softc *sc)
 	sc->sc_format.channels = 2;
 	sc->sc_format.channel_mask = AUFMT_STEREO;
 	sc->sc_format.frequency_type = 0;
-	sc->sc_format.frequency[0] = sc->sc_format.frequency[1] = 48000;
+	sc->sc_format.frequency[0] = sc->sc_format.frequency[1] = sample_rate;
 
 	return 0;
+}
+
+static int
+tegra_codec_rt5640_set_port(struct tegra_codec_softc *sc, mixer_ctrl_t *mc)
+{
+	return alc56xx_set_port(sc->sc_codec, mc);
+}
+
+static int
+tegra_codec_rt5640_get_port(struct tegra_codec_softc *sc, mixer_ctrl_t *mc)
+{
+	return alc56xx_get_port(sc->sc_codec, mc);
+}
+
+static int
+tegra_codec_rt5640_query_devinfo(struct tegra_codec_softc *sc,
+    mixer_devinfo_t *di)
+{
+	return alc56xx_query_devinfo(sc->sc_codec, di);
 }
 
 static const struct tegra_codec_ops tegra_codec_rt5640_ops = {
 	.id = "Realtek ALC5640",
 	.codec_lookup = tegra_codec_rt5640_codec_lookup,
 	.init = tegra_codec_rt5640_init,
+	.set_port = tegra_codec_rt5640_set_port,
+	.get_port = tegra_codec_rt5640_get_port,
+	.query_devinfo = tegra_codec_rt5640_query_devinfo,
 };
 #endif
 

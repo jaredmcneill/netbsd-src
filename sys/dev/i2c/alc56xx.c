@@ -62,6 +62,22 @@ struct alc56xx_softc {
 	struct fdtbus_gpio_pin *sc_pin_ldo1_en;
 };
 
+enum {
+	RT_OUTPUT_CLASS,
+	RT_MASTER_VOL,
+	RT_HEADPHONES_VOL,
+	RT_HEADPHONES_MUTE,
+#if notyet
+	RT_LINE_VOL,
+	RT_LINE_MUTE,
+#endif
+
+	RT_INPUT_CLASS,
+	RT_DAC_VOL,
+
+	RT_NDEVS
+};
+
 static int	alc56xx_match(device_t, cfdata_t, void *);
 static void	alc56xx_attach(device_t, device_t, void *);
 
@@ -69,6 +85,11 @@ static int	alc56xx_read(struct alc56xx_softc *, uint8_t, uint16_t *);
 static int	alc56xx_write(struct alc56xx_softc *, uint8_t, uint16_t);
 static int	alc56xx_set_clear(struct alc56xx_softc *, uint8_t, uint16_t,
 				  uint16_t);
+
+#if 0
+static int	alc56xx_pr_read(struct alc56xx_softc *, uint8_t, uint16_t *);
+#endif
+static int	alc56xx_pr_write(struct alc56xx_softc *, uint8_t, uint16_t);
 
 CFATTACH_DECL_NEW(alc56xx, sizeof(struct alc56xx_softc),
     alc56xx_match, alc56xx_attach, NULL, NULL);
@@ -144,12 +165,37 @@ alc56xx_set_clear(struct alc56xx_softc *sc, uint8_t reg, uint16_t set,
 	int error;
 
 	error = alc56xx_read(sc, reg, &old);
-	if (error) {
+	if (error)
 		return error;
-	}
 	new = set | (old & ~clr);
 
 	return alc56xx_write(sc, reg, new);
+}
+
+#if 0
+static int
+alc56xx_pr_read(struct alc56xx_softc *sc, uint8_t reg, uint16_t *val)
+{
+	int error;
+
+	error = alc56xx_write(sc, MX_PR_INDEX, reg);
+	if (error)
+		return error;
+
+	return alc56xx_read(sc, MX_PR_DATA, val);
+}
+#endif
+
+static int
+alc56xx_pr_write(struct alc56xx_softc *sc, uint8_t reg, uint16_t val)
+{
+	int error;
+
+	error = alc56xx_write(sc, MX_PR_INDEX, reg);
+	if (error)
+		return error;
+
+	return alc56xx_write(sc, MX_PR_DATA, val);
 }
 
 device_t
@@ -206,16 +252,233 @@ alc56xx_start(device_t dev)
 	/* S/W reset */
 	alc56xx_write(sc, MX_DEVICE_ID_REG, 0);
 
-	/* Set system clock source to MCLK */
-	alc56xx_write(sc, MX_GLOBAL_CLOCK_CTRL_REG,
-	    __SHIFTIN(MX_GLOBAL_CLOCK_CTRL_MUX_MCLK, MX_GLOBAL_CLOCK_CTRL_MUX));
+if (0) {
+	/* Init private registers */
+	alc56xx_pr_write(sc, 0x3d, 0x3600);
+	alc56xx_pr_write(sc, 0x12, 0x0aa8);
+	alc56xx_pr_write(sc, 0x14, 0x0aaa);
+	alc56xx_pr_write(sc, 0x20, 0x6110);
+	alc56xx_pr_write(sc, 0x21, 0xe0e0);
+	alc56xx_pr_write(sc, 0x23, 0x1804);
+}
 
-	/* Enable input clock and MCLK detection, and IN1/IN2 input controls */
+	/* Enable MCLK detection */
+	alc56xx_set_clear(sc, MX_GEN_CTRL1_REG, MX_GEN_CTRL1_MCLK_DET, 0);
+
+	/* Set system clock source to MCLK */
+	alc56xx_set_clear(sc, MX_GLOBAL_CLOCK_CTRL_REG,
+	    __SHIFTIN(MX_GLOBAL_CLOCK_CTRL_MUX_MCLK, MX_GLOBAL_CLOCK_CTRL_MUX),
+	    MX_GLOBAL_CLOCK_CTRL_MUX);
+
+	/* Power on */
+	alc56xx_set_clear(sc, MX_POWER_CTRL1_REG,
+	    MX_POWER_CTRL1_I2S1 | MX_POWER_CTRL1_I2S2 |
+	    MX_POWER_CTRL1_DACL1 | MX_POWER_CTRL1_DACR1, 0);
+	alc56xx_set_clear(sc, MX_POWER_CTRL3_REG,
+	    MX_POWER_CTRL3_VREF1 | MX_POWER_CTRL3_VREF2 |
+	    MX_POWER_CTRL3_MAIN_BIAS | MX_POWER_CTRL3_MBIAS_BG, 0);
+	delay(15000);
+	alc56xx_set_clear(sc, MX_POWER_CTRL3_REG,
+	    MX_POWER_CTRL3_VREF1_FASTMODE | MX_POWER_CTRL3_VREF2_FASTMODE, 0);
+
+	/* Enable input clock */
 	alc56xx_set_clear(sc, MX_GEN_CTRL1_REG,
-	    MX_GEN_CTRL1_MCLK_DET | MX_GEN_CTRL1_CLK_GATE |
+	    MX_GEN_CTRL1_CLK_GATE |
 	    MX_GEN_CTRL1_EN_IN1_SE | MX_GEN_CTRL1_EN_IN2_SE, 0);
 
 	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
 
 	return 0;
+}
+
+int
+alc56xx_query_devinfo(device_t dev, mixer_devinfo_t *di)
+{
+	switch (di->index) {
+	case RT_OUTPUT_CLASS:
+		di->mixer_class = RT_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioCoutputs);
+		di->type = AUDIO_MIXER_CLASS;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		return 0;
+
+	case RT_MASTER_VOL:
+		di->mixer_class = RT_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioNmaster);
+		di->type = AUDIO_MIXER_VALUE;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		di->un.v.num_channels = 2;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
+	case RT_HEADPHONES_VOL:
+		di->mixer_class = RT_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioNheadphone);
+		di->type = AUDIO_MIXER_VALUE;
+		di->prev = AUDIO_MIXER_LAST;
+		di->next = RT_HEADPHONES_MUTE;
+		di->un.v.num_channels = 2;
+		di->un.v.delta = 1;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
+	case RT_HEADPHONES_MUTE:
+		di->mixer_class = RT_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioNmute);
+		di->type = AUDIO_MIXER_ENUM;
+		di->prev = RT_HEADPHONES_VOL;
+		di->next = AUDIO_MIXER_LAST;
+		di->un.e.num_mem = 2;
+		strcpy(di->un.e.member[0].label.name, AudioNoff);
+		di->un.e.member[0].ord = 0;
+		strcpy(di->un.e.member[1].label.name, AudioNon);
+		di->un.e.member[1].ord = 1;
+		return 0;
+#if notyet
+	case RT_LINE_VOL:
+		di->mixer_class = RT_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioNline);
+		di->type = AUDIO_MIXER_VALUE;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		di->un.v.num_channels = 2;
+		di->un.v.delta = 1;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
+	case RT_LINE_MUTE:
+		di->mixer_class = RT_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioNmute);
+		di->type = AUDIO_MIXER_ENUM;
+		di->prev = RT_LINE_VOL;
+		di->next = AUDIO_MIXER_LAST;
+		di->un.e.num_mem = 2;
+		strcpy(di->un.e.member[0].label.name, AudioNoff);
+		di->un.e.member[0].ord = 0;
+		strcpy(di->un.e.member[1].label.name, AudioNon);
+		di->un.e.member[1].ord = 1;
+		return 0;
+#endif
+
+	case RT_INPUT_CLASS:
+		di->mixer_class = RT_INPUT_CLASS;
+		strcpy(di->label.name, AudioCinputs);
+		di->type = AUDIO_MIXER_CLASS;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		return 0;
+
+	case RT_DAC_VOL:
+		di->mixer_class = RT_INPUT_CLASS;
+		strcpy(di->label.name, AudioNdac);
+		di->type = AUDIO_MIXER_VALUE;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		di->un.v.num_channels = 2;
+		di->un.v.delta = 1;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
+
+	default:
+		return ENXIO;
+	}
+}
+
+int
+alc56xx_set_port(device_t dev, mixer_ctrl_t *mc)
+{
+	struct alc56xx_softc * const sc = device_private(dev);
+	uint16_t val;
+	int error;
+
+	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+
+	switch (mc->dev) {
+	case RT_MASTER_VOL:
+	case RT_DAC_VOL:
+		error = alc56xx_read(sc, MX_DAC1_DVOL_REG, &val);
+		if (error)
+			break;
+		val &= ~MX_DAC1_LEFT;
+		val |= __SHIFTIN(mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT],
+				 MX_DAC1_LEFT);
+		val &= ~MX_DAC1_RIGHT;
+		val |= __SHIFTIN(mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT],
+				 MX_DAC1_RIGHT);
+		error = alc56xx_write(sc, MX_DAC1_DVOL_REG, val);
+		break;
+
+	case RT_HEADPHONES_VOL:
+		error = alc56xx_read(sc, MX_HPOUT_REG, &val);
+		if (error)
+			break;
+		val &= ~MX_HPOUT_HPOVOLL;
+		val |= __SHIFTIN(mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT],
+				 MX_HPOUT_HPOVOLL);
+		val &= ~MX_HPOUT_HPOVOLR;
+		val |= __SHIFTIN(mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT],
+				 MX_HPOUT_HPOVOLR);
+		error = alc56xx_write(sc, MX_HPOUT_REG, val);
+		break;
+
+	case RT_HEADPHONES_MUTE:
+		error = alc56xx_read(sc, MX_HPOUT_REG, &val);
+		if (error)
+			break;
+		if (mc->un.ord)
+			val |= MX_HPOUT_MUTE;
+		else
+			val &= ~MX_HPOUT_MUTE;
+		error = alc56xx_write(sc, MX_HPOUT_REG, val);
+		break;
+
+	default:
+		error = ENXIO;
+		break;
+	}
+
+	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+
+	return error;
+}
+
+int
+alc56xx_get_port(device_t dev, mixer_ctrl_t *mc)
+{
+	struct alc56xx_softc * const sc = device_private(dev);
+	uint16_t val;
+	int error;
+
+	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+
+	switch (mc->dev) {
+	case RT_MASTER_VOL:
+	case RT_DAC_VOL:
+		error = alc56xx_read(sc, MX_DAC1_DVOL_REG, &val);
+		if (!error) {
+			mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
+			    __SHIFTOUT(val, MX_DAC1_LEFT);
+			mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
+			    __SHIFTOUT(val, MX_DAC1_RIGHT);
+		}
+		break;
+
+	case RT_HEADPHONES_VOL:
+		error = alc56xx_read(sc, MX_HPOUT_REG, &val);
+		if (!error) {
+			mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
+			    __SHIFTOUT(val, MX_HPOUT_HPOVOLL);
+			mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
+			    __SHIFTOUT(val, MX_HPOUT_HPOVOLR);
+		}
+		break;
+
+	case RT_HEADPHONES_MUTE:
+		error = alc56xx_read(sc, MX_HPOUT_REG, &val);
+		if (!error)
+			mc->un.ord = (val & MX_HPOUT_MUTE) != 0;
+		break;
+
+	default:
+		error = ENXIO;
+		break;
+	}
+
+	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+
+	return error;
 }

@@ -191,6 +191,10 @@ tegra_i2s_attach(device_t parent, device_t self, void *aux)
 	tegra_ahub_route_i2s(sc->sc_ahub, sc->sc_ahub_chan, sc->sc_i2s_chan,
 	    sc->sc_cif_ids[0], sc->sc_cif_ids[1], true);
 
+	/* Enable I2S interrupts to AHUB */
+	I2S_WRITE(sc, I2S_FLOW_STATUS_REG,
+	    I2S_FLOW_STATUS_MONITOR_INT_EN | I2S_FLOW_STATUS_MONITOR_EN);
+
 	/* XXX I2S bit format settings. These are codec dependent. */
 	val = I2S_CTRL_MASTER;
 	val |= __SHIFTIN(I2S_CTRL_FRAME_FORMAT_LRCK_MODE,
@@ -198,7 +202,6 @@ tegra_i2s_attach(device_t parent, device_t self, void *aux)
 	val |= __SHIFTIN(I2S_CTRL_BIT_CODE_LINEAR, I2S_CTRL_BIT_CODE);
 	val |= __SHIFTIN(I2S_CTRL_BIT_SIZE_16, I2S_CTRL_BIT_SIZE);
 	I2S_WRITE(sc, I2S_CTRL_REG, val);
-
 	I2S_WRITE(sc, I2S_OFFSET_REG,
 	    __SHIFTIN(1, I2S_OFFSET_RX_DATA_OFFSET) |
 	    __SHIFTIN(1, I2S_OFFSET_TX_DATA_OFFSET));
@@ -214,14 +217,12 @@ tegra_i2s_set_timings(struct tegra_i2s_softc *sc, const audio_params_t *params)
 	rate = params->sample_rate * params->channels * params->precision * 2;
 	bit_cnt = (rate / (2 * params->sample_rate)) - 1;
 
-	aprint_normal_dev(sc->sc_dev, "set rate %u Hz\n", rate);
 	error = clk_set_rate(sc->sc_clk, rate);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "couldn't set i2s rate (%d)\n",
 		    error);
 		return error;
 	}
-	aprint_normal_dev(sc->sc_dev, "get rate %u Hz\n", clk_get_rate(sc->sc_clk));
 
 	val = __SHIFTIN(bit_cnt, I2S_TIMING_CHANNEL_BIT_CNT);
 	if ((rate % (2 * params->sample_rate)) != 0)
