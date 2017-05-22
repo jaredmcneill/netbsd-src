@@ -198,6 +198,41 @@ alc56xx_pr_write(struct alc56xx_softc *sc, uint8_t reg, uint16_t val)
 	return alc56xx_write(sc, MX_PR_DATA, val);
 }
 
+static void
+alc56xx_route_dac1_to_hp(struct alc56xx_softc *sc)
+{
+	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+
+	/* Power on OUTMIXL/OUTMIXR */
+	alc56xx_set_clear(sc, MX_POWER_CTRL5_REG,
+	    MX_POWER_CTRL5_OUTMIXL | MX_POWER_CTRL5_OUTMIXR, 0);
+
+	/* Unmute DACL1 to OUTMIXL */
+	alc56xx_set_clear(sc, MX_OUTMIXL_CTRL3_REG,
+	    0, MX_OUTMIXL_CTRL3_DACL1_MUTE);
+	/* Unmute DACR1 to OUTMIXR */
+	alc56xx_set_clear(sc, MX_OUTMIXR_CTRL3_REG,
+	    0, MX_OUTMIXR_CTRL3_DACR1_MUTE);
+
+	/* Power on HPOVOLL/HPOVOLR */
+	alc56xx_set_clear(sc, MX_POWER_CTRL6_REG,
+	    MX_POWER_CTRL6_HPOVOLL | MX_POWER_CTRL6_HPOVOLR, 0);
+
+	/* Unmute OUTMIX to HPOVOL */
+	alc56xx_set_clear(sc, MX_HPOUT_REG,
+	    0, MX_HPOUT_HPOVOLL_MUTE | MX_HPOUT_HPOVOLR_MUTE);
+
+	/* Unmute HPOVOL to HPOMIX */
+	alc56xx_set_clear(sc, MX_HPOMIX_REG,
+	    0, MX_HPOMIX_HPOVOL_MUTE);
+
+	/* Enable HP output */
+	alc56xx_write(sc, MX_HP_AMP_CTRL1_REG,
+	    MX_HP_AMP_CTRL1_POW_CAPLESS | MX_HP_AMP_CTRL1_EN_SOFTGEN_HP);
+
+	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+}
+
 device_t
 alc56xx_lookup(int phandle)
 {
@@ -273,10 +308,13 @@ if (0) {
 	/* Power on */
 	alc56xx_set_clear(sc, MX_POWER_CTRL1_REG,
 	    MX_POWER_CTRL1_I2S1 | MX_POWER_CTRL1_I2S2 |
-	    MX_POWER_CTRL1_DACL1 | MX_POWER_CTRL1_DACR1, 0);
+	    MX_POWER_CTRL1_DACL1 | MX_POWER_CTRL1_DACR1 |
+	    MX_POWER_CTRL1_CLASSD, 0);
 	alc56xx_set_clear(sc, MX_POWER_CTRL3_REG,
 	    MX_POWER_CTRL3_VREF1 | MX_POWER_CTRL3_VREF2 |
-	    MX_POWER_CTRL3_MAIN_BIAS | MX_POWER_CTRL3_MBIAS_BG, 0);
+	    MX_POWER_CTRL3_MAIN_BIAS | MX_POWER_CTRL3_MBIAS_BG |
+	    MX_POWER_CTRL3_HP_LEFT | MX_POWER_CTRL3_HP_RIGHT |
+	    MX_POWER_CTRL3_HP_AMP, 0);
 	delay(15000);
 	alc56xx_set_clear(sc, MX_POWER_CTRL3_REG,
 	    MX_POWER_CTRL3_VREF1_FASTMODE | MX_POWER_CTRL3_VREF2_FASTMODE, 0);
@@ -286,7 +324,12 @@ if (0) {
 	    MX_GEN_CTRL1_CLK_GATE |
 	    MX_GEN_CTRL1_EN_IN1_SE | MX_GEN_CTRL1_EN_IN2_SE, 0);
 
+	/* Configure I2S1 digital interface (I2S format, 16-bit, no compress */
+	alc56xx_write(sc, MX_I2S1_CTRL_REG, MX_I2S1_CTRL_MODE);
+
 	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+
+	alc56xx_route_dac1_to_hp(sc);
 
 	return 0;
 }
@@ -420,10 +463,23 @@ alc56xx_set_port(device_t dev, mixer_ctrl_t *mc)
 		if (error)
 			break;
 		if (mc->un.ord)
-			val |= MX_HPOUT_MUTE;
+			val |= MX_HPOUT_HPO_MUTE;
 		else
-			val &= ~MX_HPOUT_MUTE;
+			val &= ~MX_HPOUT_HPO_MUTE;
 		error = alc56xx_write(sc, MX_HPOUT_REG, val);
+		if (error)
+			break;
+
+		error = alc56xx_read(sc, MX_HPOMIX_REG, &val);
+		if (error)
+			break;
+		if (mc->un.ord)
+			val |= MX_HPOMIX_DAC1_MUTE;
+		else
+			val &= ~MX_HPOMIX_DAC1_MUTE;
+		error = alc56xx_write(sc, MX_HPOMIX_REG, val);
+		if (error)
+			break;
 		break;
 
 	default:
@@ -469,8 +525,14 @@ alc56xx_get_port(device_t dev, mixer_ctrl_t *mc)
 
 	case RT_HEADPHONES_MUTE:
 		error = alc56xx_read(sc, MX_HPOUT_REG, &val);
-		if (!error)
-			mc->un.ord = (val & MX_HPOUT_MUTE) != 0;
+		if (error)
+			break;
+		const int hpout_mute = (val & MX_HPOUT_HPO_MUTE) != 0;
+		error = alc56xx_read(sc, MX_HPOMIX_REG, &val);
+		if (error)
+			break;
+		const int hpomix_mute = (val & MX_HPOMIX_DAC1_MUTE) != 0;
+		mc->un.ord = hpout_mute && hpomix_mute;
 		break;
 
 	default:
