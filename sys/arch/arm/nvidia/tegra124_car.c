@@ -646,11 +646,11 @@ static struct tegra_clk tegra124_car_clocks[] = {
 		CAR_CLKSRC_I2S3_REG, CAR_CLKSRC_I2S_DIV),
 	CLK_DIV("div_i2s4", "mux_i2s4",
 		CAR_CLKSRC_I2S4_REG, CAR_CLKSRC_I2S_DIV),
-	CLK_DIV("extern1", "mux_extern1",
+	CLK_DIV("div_extern1", "mux_extern1",
 		CAR_CLKSRC_EXTPERIPH1_REG, CAR_CLKSRC_EXTPERIPH_DIV),
-	CLK_DIV("extern2", "mux_extern2",
+	CLK_DIV("div_extern2", "mux_extern2",
 		CAR_CLKSRC_EXTPERIPH2_REG, CAR_CLKSRC_EXTPERIPH_DIV),
-	CLK_DIV("extern3", "mux_extern3",
+	CLK_DIV("div_extern3", "mux_extern3",
 		CAR_CLKSRC_EXTPERIPH3_REG, CAR_CLKSRC_EXTPERIPH_DIV),
 
 	CLK_GATE_L("uarta", "div_uarta", CAR_DEV_L_UARTA),
@@ -706,6 +706,9 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_GATE_L("i2s2", "div_i2s2", CAR_DEV_L_I2S2),
 	CLK_GATE_L("i2s3", "div_i2s3", CAR_DEV_V_I2S3),
 	CLK_GATE_L("i2s4", "div_i2s4", CAR_DEV_V_I2S4),
+	CLK_GATE_V("extern1", "div_extern1", CAR_DEV_V_EXTPERIPH1),
+	CLK_GATE_V("extern2", "div_extern2", CAR_DEV_V_EXTPERIPH2),
+	CLK_GATE_V("extern3", "div_extern3", CAR_DEV_V_EXTPERIPH3),
 };
 
 struct tegra124_init_parent {
