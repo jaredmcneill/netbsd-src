@@ -29,6 +29,9 @@ makeoptions	DTS="
 	exynos5422-odroidxu3.dts
 	exynos5422-odroidxu4.dts
 
+	meson8b-mxq.dts
+	meson8b-odroidc1.dts
+
 	socfpga_cyclone5_de0_nano_soc.dts
 
 	sun4i-a10-a1000.dts
@@ -160,6 +163,7 @@ makeoptions	DTS="
 	vexpress-v2p-ca15-tc1.dts
 "
 
+options 	CPU_CORTEXA5
 options 	CPU_CORTEXA7
 options 	CPU_CORTEXA8
 options 	CPU_CORTEXA9
@@ -174,6 +178,8 @@ options 	SOC_BCM2836
 
 options 	SOC_EXYNOS4412
 options 	SOC_EXYNOS5422
+
+options 	SOC_MESON8B
 
 options 	SOC_SUN4I_A10
 options 	SOC_SUN5I_A13
@@ -202,6 +208,9 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
+
+# ODROID-C1
+#options 	EARLYCONS=meson, CONSADDR=0xc81004c0
 
 # ODROID-U3
 #options 	EARLYCONS=exynos, CONSADDR=0x13810000
@@ -249,6 +258,7 @@ cycvclkmgr* 	at fdt? pass 1		# Cyclone V clock manager
 cycvrstmgr* 	at fdt? pass 0		# Cyclone V reset manager
 exy5410clk*	at fdt? pass 3		# Exynos5410 clock controller
 exy5422clk*	at fdt? pass 3		# Exynos5422 clock controller
+meson8bclkc*	at fdt? pass 2		# Amlogic Meson8b clock controller
 sun4ia10ccu*	at fdt? pass 2		# Allwinner A10/A20 CCU
 sun5ia13ccu*	at fdt? pass 2		# Allwinner A13 CCU
 sun6ia31ccu*	at fdt? pass 2		# Allwinner A31 CCU
@@ -415,8 +425,9 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 
 # UART
 com*		at fdt?			# UART
-plcom*		at fdt?			# ARM PL011 UART
 exuart*		at fdt?			# SSCOM UART
+plcom*		at fdt?			# ARM PL011 UART
+mesonuart*	at fdt?			# Amlogic Meson UART
 
 # I2C controllers
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
@@ -454,6 +465,7 @@ spi*            at spibus?
 
 # Random number generators
 bcmrng*		at fdt?			# Broadcom BCM283x RNG
+mesonrng*	at fdt?			# Amlogic Meson RNG
 
 # Security ID EFUSE
 sunxisid*       at fdt? pass 4          # SID

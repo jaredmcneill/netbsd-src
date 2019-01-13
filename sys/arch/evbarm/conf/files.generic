@@ -18,6 +18,7 @@ file	arch/arm/arm/bus_space_a4x.S
 
 # Add other board files here
 include "arch/arm/altera/files.altera"
+include "arch/arm/amlogic/files.meson"
 include "arch/arm/broadcom/files.bcm2835"
 include "arch/arm/nvidia/files.tegra"
 include "arch/arm/samsung/files.exynos"
