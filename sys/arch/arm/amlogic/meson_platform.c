@@ -107,7 +107,7 @@ meson_platform_early_putchar(char c)
 	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
 	    (volatile uint32_t *)CONSADDR_VA :
 	    (volatile uint32_t *)CONSADDR;
-	int timeo = 150000;
+	int timo = 150000;
 
 	while ((uartaddr[UART_STATUS_REG/4] & UART_STATUS_TX_EMPTY) == 0) {
 		if (--timo == 0)
