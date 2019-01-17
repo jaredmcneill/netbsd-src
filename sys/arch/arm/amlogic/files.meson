@@ -33,10 +33,10 @@ attach	mesonuart at fdt with meson_uart
 file	arch/arm/amlogic/meson_uart.c		meson_uart
 
 # GPIO
-#device	mesongpio: gpiobus
-#attach	mesongpio at fdt with meson_gpio
-#file	arch/arm/amlogic/meson_gpio.c		meson_gpio
-#file	arch/arm/amlogic/meson8b_gpio.c		meson_gpio & soc_meson8b
+device	mesonpinctrl: gpiobus
+attach	mesonpinctrl at fdt with meson_pinctrl
+file	arch/arm/amlogic/meson_pinctrl.c	meson_pinctrl
+file	arch/arm/amlogic/meson8b_pinctrl.c	meson_pinctrl & soc_meson8b
 
 # SDHC
 #device	mesonsdhc: sdmmcbus

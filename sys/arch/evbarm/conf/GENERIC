@@ -355,6 +355,7 @@ bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 # GPIO controller
 bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
 exyopctl*	at fdt? pass 2		# Samsung Exynos GPIO
+mesonpinctrl*	at fdt? pass 2		# Amlogic Meson GPIO
 plgpio*		at fdt?			# ARM PrimeCell GPIO
 sunxigpio*	at fdt? pass 3		# Allwinner GPIO
 tegragpio*	at fdt? pass 2		# NVIDIA Tegra GPIO
