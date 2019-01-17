@@ -76,6 +76,9 @@ l2cc_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	struct mpcore_attach_args mpcaa = {
 		.mpcaa_name = "arml2cc",
 		.mpcaa_memt = faa->faa_bst,
