@@ -150,7 +150,7 @@ meson_sdio_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	char intrstr[128];
-	struct clk *clk_clkin;
+	struct clk *clk_clkin, *clk_core;
 	bus_addr_t addr, port;
 	bus_size_t size;
 	int child;
@@ -162,6 +162,12 @@ meson_sdio_attach(device_t parent, device_t self, void *aux)
 
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error(": failed to decode interrupt\n");
+		return;
+	}
+
+	clk_core = fdtbus_clock_get(phandle, "core");
+	if (clk_core == NULL || clk_enable(clk_core) != 0) {
+		aprint_error(": failed to enable core clock\n");
 		return;
 	}
 
@@ -219,7 +225,8 @@ meson_sdio_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	sc->sc_bus_freq = clk_get_rate(clk_clkin);
-	aprint_debug_dev(self, "clkin rate: %u Hz\n", sc->sc_bus_freq);
+
+	aprint_normal_dev(self, "core %u Hz, clkin %u Hz\n", clk_get_rate(clk_core), clk_get_rate(clk_clkin));
 
 	meson_sdio_dmainit(sc);
 
