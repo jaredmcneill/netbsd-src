@@ -44,9 +44,9 @@ file	arch/arm/amlogic/meson8b_pinctrl.c	meson_pinctrl & soc_meson8b
 #file	arch/arm/amlogic/meson_sdhc.c		meson_sdhc
 
 # SDIO
-#device	mesonsdio: sdmmcbus
-#attach	mesonsdio at fdt with meson_sdio
-#file	arch/arm/amlogic/meson_sdio.c		meson_sdio
+device	mesonsdio: sdmmcbus
+attach	mesonsdio at fdt with meson_sdio
+file	arch/arm/amlogic/meson_sdio.c		meson_sdio
 
 # USB PHY
 #device	mesonusbphy
