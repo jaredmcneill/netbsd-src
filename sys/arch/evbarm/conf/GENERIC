@@ -259,6 +259,7 @@ cycvrstmgr* 	at fdt? pass 0		# Cyclone V reset manager
 exy5410clk*	at fdt? pass 3		# Exynos5410 clock controller
 exy5422clk*	at fdt? pass 3		# Exynos5422 clock controller
 meson8bclkc*	at fdt? pass 2		# Amlogic Meson8b clock controller
+mesonresets*	at fdt? pass 2		# Amlogic Meson misc. clock resets
 sun4ia10ccu*	at fdt? pass 2		# Allwinner A10/A20 CCU
 sun5ia13ccu*	at fdt? pass 2		# Allwinner A13 CCU
 sun6ia31ccu*	at fdt? pass 2		# Allwinner A31 CCU
@@ -506,12 +507,12 @@ spkr*		at audio?
 
 # SDMMC
 dwcmmc*		at fdt?			# DesignWare SDMMC
+mesonsdio*	at fdt?			# Amlogic Meson SDIO controller
 mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
 plmmc*		at fdt?			# ARM PrimeCell MCI
 sdhc*		at fdt?			# SD Host Controller Interface
 sdhost*		at fdt?			# Broadcom BCM283x SD Host Interface
 sunximmc*	at fdt?			# Allwinner SD/MMC
-sdmmc*		at sunximmc?
 sdmmc*		at sdmmcbus?
 ld0		at sdmmc0
 ld1		at sdmmc1
