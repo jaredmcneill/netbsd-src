@@ -64,6 +64,10 @@ meson_clk_div_get_rate(struct meson_clk_softc *sc,
 
 	if (div->flags & MESON_CLK_DIV_POWER_OF_TWO) {
 		ratio = 1 << ratio;
+	} else if (div->flags & MESON_CLK_DIV_CPU_SCALE_TABLE) {
+		if (ratio < 1 || ratio > 8)
+			return 0;
+		ratio = (ratio + 1) * 2;
 	} else {
 		ratio++;
 	}

@@ -42,11 +42,14 @@ meson_clk_gate_enable(struct meson_clk_softc *sc, struct meson_clk_clk *clk,
 {
 	struct meson_clk_gate *gate = &clk->u.gate;
 	uint32_t val;
+	int set;
 
 	KASSERT(clk->type == MESON_CLK_GATE);
 
+	set = (gate->flags & MESON_CLK_GATE_SET_TO_DISABLE) ? !enable : enable;
+
 	val = CLK_READ(sc, gate->reg);
-	if (enable)
+	if (set)
 		val |= gate->mask;
 	else
 		val &= ~gate->mask;

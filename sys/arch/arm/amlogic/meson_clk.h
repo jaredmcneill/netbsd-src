@@ -92,6 +92,8 @@ struct meson_clk_gate {
 	bus_size_t	reg;
 	uint32_t	mask;
 	const char	*parent;
+	uint32_t	flags;
+#define	MESON_CLK_GATE_SET_TO_DISABLE		__BIT(0)
 };
 
 int	meson_clk_gate_enable(struct meson_clk_softc *,
@@ -99,7 +101,7 @@ int	meson_clk_gate_enable(struct meson_clk_softc *,
 const char *meson_clk_gate_get_parent(struct meson_clk_softc *,
 				      struct meson_clk_clk *);
 
-#define	MESON_CLK_GATE(_id, _name, _pname, _reg, _bit)		\
+#define	MESON_CLK_GATE_FLAGS(_id, _name, _pname, _reg, _bit, _flags)	\
 	[_id] = {						\
 		.type = MESON_CLK_GATE,				\
 		.base.name = (_name),				\
@@ -107,9 +109,13 @@ const char *meson_clk_gate_get_parent(struct meson_clk_softc *,
 		.u.gate.parent = (_pname),			\
 		.u.gate.reg = (_reg),				\
 		.u.gate.mask = __BIT(_bit),			\
+		.u.gate.flags = (_flags),			\
 		.enable = meson_clk_gate_enable,		\
 		.get_parent = meson_clk_gate_get_parent,	\
 	}
+
+#define	MESON_CLK_GATE(_id, _name, _pname, _reg, _bit)		\
+	MESON_CLK_GATE_FLAGS(_id, _name, _pname, _reg, _bit, 0)
 
 /*
  * Divider clocks
@@ -122,6 +128,7 @@ struct meson_clk_div {
 	uint32_t	flags;
 #define	MESON_CLK_DIV_POWER_OF_TWO	__BIT(0)
 #define	MESON_CLK_DIV_SET_RATE_PARENT	__BIT(1)
+#define	MESON_CLK_DIV_CPU_SCALE_TABLE	__BIT(2)
 };
 
 u_int	meson_clk_div_get_rate(struct meson_clk_softc *,

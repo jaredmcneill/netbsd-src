@@ -51,6 +51,7 @@ __KERNEL_RCSID(1, "$NetBSD$");
 #define	HHI_GCLK_MPEG0		CBUS_REG(0x50)
 #define	HHI_GCLK_MPEG1		CBUS_REG(0x51)
 #define	HHI_GCLK_MPEG2		CBUS_REG(0x52)
+#define	HHI_SYS_CPU_CLK_CNTL1	CBUS_REG(0x57)
 #define	HHI_MPEG_CLK_CNTL	CBUS_REG(0x5d)
 #define	HHI_SYS_CPU_CLK_CNTL0	CBUS_REG(0x67)
 #define	HHI_MPLL_CNTL		CBUS_REG(0xa0)
@@ -60,6 +61,7 @@ __KERNEL_RCSID(1, "$NetBSD$");
 #define	HHI_MPLL_CNTL7		CBUS_REG(0xa6)
 #define	HHI_MPLL_CNTL8		CBUS_REG(0xa7)
 #define	HHI_MPLL_CNTL9		CBUS_REG(0xa8)
+#define	HHI_SYS_PLL_CNTL	CBUS_REG(0xc0)
 
 static int meson8b_clkc_match(device_t, cfdata_t, void *);
 static void meson8b_clkc_attach(device_t, device_t, void *);
@@ -80,10 +82,68 @@ static struct meson_clk_reset meson8b_clkc_resets[] = {
 };
 
 static const char *mpeg_sel_parents[] = { "xtal", NULL, "fclk_div7", "mpll_clkout1", "mpll_clkout2", "fclk_div4", "fclk_div3", "fclk_div5" };
+static const char *cpu_in_sel_parents[] = { "xtal", "sys_pll" };
+static const char *cpu_scale_out_sel_parents[] = { "cpu_in_sel", "cpu_in_div2", NULL, "cpu_scale_div" };
+static const char *cpu_clk_parents[] = { "xtal", "cpu_scale_out_sel" };
+static const char *periph_clk_sel_parents[] = { "cpu_clk_div2", "cpu_clk_div3", "cpu_clk_div4", "cpu_clk_div5", "cpu_clk_div6", "cpu_clk_div7", "cpu_clk_div8" };
 
 static struct meson_clk_clk meson8b_clkc_clks[] = {
 
 	MESON_CLK_FIXED(MESON8B_CLOCK_XTAL, "xtal", 24000000),
+
+	MESON_CLK_PLL(MESON8B_CLOCK_PLL_SYS_DCO, "pll_sys_dco", "xtal",
+	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL, __BIT(30)),	/* enable */
+	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL, __BITS(8,0)),	/* m */
+	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL, __BITS(13,9)),	/* n */
+	    MESON_CLK_PLL_REG_INVALID,				/* frac */
+	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL, __BIT(31)),	/* l */
+	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL, __BIT(29)),	/* reset */
+	    0),
+
+	MESON_CLK_DIV(MESON8B_CLOCK_PLL_SYS, "sys_pll", "sys_pll_dco",
+	    HHI_SYS_PLL_CNTL,		/* reg */
+	    __BITS(17,16),		/* div */
+	    MESON_CLK_DIV_POWER_OF_TWO),
+
+	MESON_CLK_MUX(MESON8B_CLOCK_CPU_IN_SEL, "cpu_in_sel", cpu_in_sel_parents,
+	    HHI_SYS_CPU_CLK_CNTL0,	/* reg */
+	    __BIT(1),			/* sel */
+	    0),
+
+	MESON_CLK_FIXED_FACTOR(MESON8B_CLOCK_CPU_IN_DIV2, "cpu_in_div2", "cpu_in_sel", 2, 1),
+	MESON_CLK_FIXED_FACTOR(MESON8B_CLOCK_CPU_IN_DIV3, "cpu_in_div3", "cpu_in_sel", 3, 1),
+
+	MESON_CLK_DIV(MESON8B_CLOCK_CPU_SCALE_DIV, "cpu_scale_div", "cpu_in_sel",
+	    HHI_SYS_CPU_CLK_CNTL1,	/* reg */
+	    __BITS(29,20),		/* div */
+	    MESON_CLK_DIV_CPU_SCALE_TABLE),
+
+	MESON_CLK_MUX(MESON8B_CLOCK_CPU_SCALE_OUT_SEL, "cpu_scale_out_sel", cpu_scale_out_sel_parents,
+	    HHI_SYS_CPU_CLK_CNTL0,	/* reg */
+	    __BITS(3,2),		/* sel */
+	    0),
+
+	MESON_CLK_MUX(MESON8B_CLOCK_CPUCLK, "cpu_clk", cpu_clk_parents,
+	    HHI_SYS_CPU_CLK_CNTL0,	/* reg */
+	    __BIT(7),			/* sel */
+	    0),
+
+	MESON_CLK_FIXED_FACTOR(MESON8B_CLOCK_CPU_CLK_DIV2, "cpu_clk_div2", "cpu_clk", 2, 1),
+	MESON_CLK_FIXED_FACTOR(MESON8B_CLOCK_CPU_CLK_DIV3, "cpu_clk_div3", "cpu_clk", 3, 1),
+	MESON_CLK_FIXED_FACTOR(MESON8B_CLOCK_CPU_CLK_DIV4, "cpu_clk_div4", "cpu_clk", 4, 1),
+	MESON_CLK_FIXED_FACTOR(MESON8B_CLOCK_CPU_CLK_DIV5, "cpu_clk_div5", "cpu_clk", 5, 1),
+	MESON_CLK_FIXED_FACTOR(MESON8B_CLOCK_CPU_CLK_DIV6, "cpu_clk_div6", "cpu_clk", 6, 1),
+	MESON_CLK_FIXED_FACTOR(MESON8B_CLOCK_CPU_CLK_DIV7, "cpu_clk_div7", "cpu_clk", 7, 1),
+	MESON_CLK_FIXED_FACTOR(MESON8B_CLOCK_CPU_CLK_DIV8, "cpu_clk_div8", "cpu_clk", 8, 1),
+
+	MESON_CLK_MUX(MESON8B_CLOCK_PERIPH_SEL, "periph_clk_sel", periph_clk_sel_parents,
+	    HHI_SYS_CPU_CLK_CNTL1,	/* reg */
+	    __BITS(8,6),		/* sel */
+	    0),
+	MESON_CLK_GATE_FLAGS(MESON8B_CLOCK_PERIPH, "periph_clk_dis", "periph_clk_sel",
+	    HHI_SYS_CPU_CLK_CNTL1,	/* reg */
+	    17,				/* bit */
+	    MESON_CLK_GATE_SET_TO_DISABLE),
 
 	MESON_CLK_PLL(MESON8B_CLOCK_PLL_FIXED_DCO, "pll_fixed_dco", "xtal",
 	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL, __BIT(30)),	/* enable */
