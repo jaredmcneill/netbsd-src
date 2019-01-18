@@ -70,7 +70,7 @@ meson_clk_mpll_get_rate(struct meson_clk_softc *sc,
 
 	const u_int div = (SDM_DEN * n2) + sdm;
 
-	return (u_int)roundup(parent_rate * SDM_DEN, div);
+	return (u_int)howmany(parent_rate * SDM_DEN, div);
 }
 
 const char *

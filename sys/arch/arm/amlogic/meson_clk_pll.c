@@ -73,10 +73,10 @@ meson_clk_pll_get_rate(struct meson_clk_softc *sc,
 	rate = parent_rate * m;
 	if (frac) {
 		uint64_t frac_rate = parent_rate * frac;
-		rate += roundup(frac_rate, __SHIFTOUT_MASK(pll->frac.mask) + 1);
+		rate += howmany(frac_rate, __SHIFTOUT_MASK(pll->frac.mask) + 1);
 	}
 
-	return (u_int)roundup(rate, n);
+	return (u_int)howmany(rate, n);
 }
 
 const char *
