@@ -88,9 +88,7 @@ meson_pinctrl_group_in_bank(struct meson_pinctrl_softc *sc,
 {
 	u_int n;
 
-	for (n = 0; n < MESON_PINCTRL_MAXBANK; n++) {
-		if (!group->bank[n])
-			break;
+	for (n = 0; n < group->nbank; n++) {
 		if (group->bank[n] == bankno)
 			return true;
 	}
@@ -129,9 +127,7 @@ meson_pinctrl_setfunc(struct meson_pinctrl_softc *sc, const char *name)
 		group = &sc->sc_conf->groups[n];
 		if (target_group == group)
 			continue;
-		for (bank = 0; bank < MESON_PINCTRL_MAXBANK; bank++) {
-			if (!target_group->bank[bank])
-				 break;
+		for (bank = 0; bank < target_group->nbank; bank++) {
 			if (meson_pinctrl_group_in_bank(sc, group, target_group->bank[bank]))
 				meson_pinctrl_set_group(sc, group, false);
 		}

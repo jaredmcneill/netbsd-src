@@ -35,17 +35,26 @@
 
 #define	MESON_PINCTRL_MAXBANK	8
 
+struct meson_pinctrl_gpio {
+	const char *name;
+	bus_size_t reg;
+	u_int bit;
+};
+
 struct meson_pinctrl_group {
 	const char *name;
 	bus_size_t reg;
 	u_int bit;
 	u_int bank[MESON_PINCTRL_MAXBANK];
+	u_int nbank;
 };
 
 struct meson_pinctrl_config {
 	const char *name;
 	const struct meson_pinctrl_group *groups;
 	u_int ngroups;
+	const struct meson_pinctrl_gpio *gpios;
+	u_int ngpios;
 };
 
 #ifdef SOC_MESON8B
