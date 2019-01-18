@@ -44,8 +44,7 @@ meson_clk_mpll_get_rate(struct meson_clk_softc *sc,
 {
 	struct meson_clk_mpll *mpll = &clk->u.mpll;
 	struct clk *clkp, *clkp_parent;
-	u_int sdm, n2;
-	uint64_t parent_rate;
+	uint64_t parent_rate, sdm, n2;
 	uint32_t val;
 
 	KASSERT(clk->type == MESON_CLK_MPLL);
@@ -65,10 +64,9 @@ meson_clk_mpll_get_rate(struct meson_clk_softc *sc,
 	val = CLK_READ(sc, mpll->n2.reg);
 	n2 = __SHIFTOUT(val, mpll->n2.mask);
 
-	if (n2 < 4)
-		return EINVAL;
-
-	const u_int div = (SDM_DEN * n2) + sdm;
+	const uint64_t div = (SDM_DEN * n2) + sdm;
+	if (div == 0)
+		return 0;
 
 	return (u_int)howmany(parent_rate * SDM_DEN, div);
 }

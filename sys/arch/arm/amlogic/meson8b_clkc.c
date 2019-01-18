@@ -83,7 +83,7 @@ static struct meson_clk_reset meson8b_clkc_resets[] = {
 
 static const char *mpeg_sel_parents[] = { "xtal", NULL, "fclk_div7", "mpll_clkout1", "mpll_clkout2", "fclk_div4", "fclk_div3", "fclk_div5" };
 static const char *cpu_in_sel_parents[] = { "xtal", "sys_pll" };
-static const char *cpu_scale_out_sel_parents[] = { "cpu_in_sel", "cpu_in_div2", NULL, "cpu_scale_div" };
+static const char *cpu_scale_out_sel_parents[] = { "cpu_in_sel", "cpu_in_div2", "cpu_in_div3", "cpu_scale_div" };
 static const char *cpu_clk_parents[] = { "xtal", "cpu_scale_out_sel" };
 static const char *periph_clk_sel_parents[] = { "cpu_clk_div2", "cpu_clk_div3", "cpu_clk_div4", "cpu_clk_div5", "cpu_clk_div6", "cpu_clk_div7", "cpu_clk_div8" };
 
@@ -100,14 +100,14 @@ static struct meson_clk_clk meson8b_clkc_clks[] = {
 	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL, __BIT(29)),	/* reset */
 	    0),
 
-	MESON_CLK_DIV(MESON8B_CLOCK_PLL_SYS, "sys_pll", "sys_pll_dco",
+	MESON_CLK_DIV(MESON8B_CLOCK_PLL_SYS, "sys_pll", "pll_sys_dco",
 	    HHI_SYS_PLL_CNTL,		/* reg */
 	    __BITS(17,16),		/* div */
 	    MESON_CLK_DIV_POWER_OF_TWO),
 
 	MESON_CLK_MUX(MESON8B_CLOCK_CPU_IN_SEL, "cpu_in_sel", cpu_in_sel_parents,
 	    HHI_SYS_CPU_CLK_CNTL0,	/* reg */
-	    __BIT(1),			/* sel */
+	    __BIT(0),			/* sel */
 	    0),
 
 	MESON_CLK_FIXED_FACTOR(MESON8B_CLOCK_CPU_IN_DIV2, "cpu_in_div2", "cpu_in_sel", 2, 1),
