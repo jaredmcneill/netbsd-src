@@ -55,6 +55,7 @@ static int
 a9tmr_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const char * const compatible[] = {
+		"arm,cortex-a5-global-timer",
 		"arm,cortex-a9-global-timer",
 		NULL
 	};
