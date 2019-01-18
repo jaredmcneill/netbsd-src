@@ -140,17 +140,8 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 
-	if (!prop_dictionary_get_uint32(dict, "offset", &off)) {
-		if (CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid)) {
-			/*
-			 * PL310 on Cortex-A5 is external to PERIPHBASE, so
-			 * "offset" property is required.
-			 */
-			aprint_normal(": not configured\n");
-			return;
-		}
+	if (!prop_dictionary_get_uint32(dict, "offset", &off))
 		off = mpcaa->mpcaa_off1;
-	}
 
 	arml2cc_sc = sc;
 	sc->sc_dev = self;
