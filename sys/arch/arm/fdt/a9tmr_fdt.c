@@ -91,6 +91,9 @@ a9tmr_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	void *ih = fdtbus_intr_establish(phandle, 0, IPL_CLOCK,
 	    FDT_INTR_MPSAFE, a9tmr_intr, NULL);
 	if (ih == NULL) {
