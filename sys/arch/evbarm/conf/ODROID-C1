@@ -5,6 +5,7 @@
 #
 
 include	"arch/evbarm/conf/std.amlogic"
+include "arch/evbarm/conf/files.amlogic"
 include	"arch/evbarm/conf/GENERIC.common"
 
 #
@@ -15,11 +16,14 @@ makeoptions 	DTSARCH="arm"
 makeoptions 	DTSGNUARCH="arm"
 makeoptions 	DTSSUBDIR="amlogic"
 makeoptions 	DTS="
+	meson8b-mxq.dts
 	meson8b-odroidc1.dts
 "
 
 options 	CPU_CORTEXA5
 options 	MULTIPROCESSOR
+
+options 	SOC_MESON8B
 
 #options 	DIAGNOSTIC
 #options 	DEBUG
@@ -27,33 +31,57 @@ options 	MULTIPROCESSOR
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 #options 	VERBOSE_INIT_ARM
-#options 	EARLYCONS=amlogic
-options 	CONSADDR=0xc81004c0, CONSPEED=115200
+
+# ODROID-C1
+options 	EARLYCONS=meson, CONSADDR=0xc81004c0
+options 	CONSPEED=115200
+
+pseudo-device 	openfirm	# /dev/openfirm
 
 config		netbsd		root on ? type ?
 
-mainbus0	at root
-cpu*		at mainbus?
+# Device tree support
+armfdt0		at root
+simplebus*	at fdt? pass 0
 
-armperiph0	at mainbus?
-arml2cc0	at armperiph?				# L2 Cache Controller
-armgic0		at armperiph?				# Interrupt Controller
-arma9tmr0	at armperiph?				# Global Timer
-a9wdt0		at armperiph?				# Watchdog
+# CPUs
+cpus*		at fdt? pass 0
+cpu*		at fdt? pass 0
 
-# On-board I/O
-amlogicio0	at mainbus?
+# Clock and reset controllers
+meson8bclkc*	at fdt? pass 2		# Amlogic Meson8b clock controller
+
+#a9wdt0 	at armperiph?			# Watchdog
+
+# Timer
+a9tmr* 		at fdt? pass 2		# ARM Cortex A5/A9 Timer
+arma9tmr* 	at a9tmr?
+
+# Level 2 Cache Controller
+l2cc* 		at fdt? pass 2		# ARM Cortex A9 L2 Cache Controller
+arml2cc* 	at l2cc?
+
+# Interrupt controller
+gic*		at fdt? pass 1		# ARM GIC
+armgic0		at gic?
+
+fclock*		at fdt? pass 1
+ffclock*	at fdt? pass 1
+fregulator*	at fdt? pass 5
+gregulator*	at fdt? pass 4
+gpiokeys*	at fdt?
+wskbd*		at gpiokeys? console ? mux 1
+gpioleds*	at fdt?
 
 # On-board UARTs
-amlogiccom0	at amlogicio0 port 0
+mesonuart*	at fdt?			# Amlogic Meson UART
 
-# GPIO
-amlogicgpio0	at amlogicio0
-gpio*		at gpiobus?
+# GPIO controller
+mesonpinctrl*	at fdt? pass 2		# Amlogic Meson GPIO
 
 # Framebuffer
-genfb0		at amlogicio0
-wsdisplay*	at genfb?
+#genfb0		at amlogicio0
+#wsdisplay*	at genfb?
 options 	VCONS_DRAW_INTR
 options 	WSEMUL_VT100
 options 	WS_DEFAULT_FG=WSCOL_WHITE
@@ -69,30 +97,30 @@ pseudo-device	wsmux
 pseudo-device	wsfont
 
 # Hardware random number generator
-amlogicrng0	at amlogicio0
+mesonrng*	at fdt?			# Amlogic Meson RNG
 
 # Real-time clock
-amlogicrtc0	at amlogicio0
+#amlogicrtc0	at amlogicio0
 
 # SDHC controller
-amlogicsdhc0	at amlogicio0
-amlogicsdio0	at amlogicio0
-sdmmc0		at amlogicsdhc0
-sdmmc1		at amlogicsdio0
-ld0		at sdmmc0
-ld1		at sdmmc1
-ld*		at sdmmc?
+#amlogicsdhc0	at amlogicio0
+#amlogicsdio0	at amlogicio0
+#sdmmc0		at amlogicsdhc0
+#sdmmc1		at amlogicsdio0
+#ld0		at sdmmc0
+#ld1		at sdmmc1
+#ld*		at sdmmc?
 
 # Gigabit ethernet
-awge0		at amlogicio0
+awge*		at fdt?			# Allwinner Gigabit Ethernet (GMAC)
 rgephy*		at mii? phy ?
 ukphy*		at mii? phy ?
 
 # USB
-dwctwo0		at amlogicio0 port 0
-dwctwo1		at amlogicio0 port 1
+dwctwo*		at fdt?			# Designware USB DRD
 usb*		at dwctwo?
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
 
 cinclude "arch/evbarm/conf/ODROID-C1.local"
+

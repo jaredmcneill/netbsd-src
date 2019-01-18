@@ -2,16 +2,21 @@
 #
 
 machine		evbarm arm
-include		"arch/evbarm/conf/std.evbarm"
+include		"conf/std"
+include		"arch/arm/conf/std.arm"		# arch standard options
 
-include		"arch/evbarm/conf/files.amlogic"
+options 	EXEC_ELF32
+options 	EXEC_SCRIPT
+
+# Architecture opions
+options 	ARM32
 
 # Architecture opions
 options 	ARM_GENERIC_TODR
 options 	ARM_HAS_VBAR
-options 	ARM_INTR_IMPL="<arch/arm/amlogic/amlogic_intr.h>"
-options 	CORTEX_PMC
-options 	FDTBASE
+options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
+options 	DRAM_BLOCKS=256
+options 	FDT				# Flattened Device Tree support
 options 	FPU_VFP
 options 	MD_CPU_HATCH=a9tmr_init_cpu_clock
 options 	MODULAR
@@ -21,9 +26,10 @@ options 	__HAVE_CPU_COUNTER
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_GENERIC_START
+options 	__HAVE_GENERIC_CPU_INITCLOCKS
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.amlogic"
-makeoptions 	BOARDTYPE="amlogic"
+makeoptions 	BOARDTYPE="meson8b"
 makeoptions 	KERNEL_BASE_PHYS="0x00100000"
 makeoptions 	KERNEL_BASE_VIRT="0x80100000"
