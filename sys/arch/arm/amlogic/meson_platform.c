@@ -30,6 +30,8 @@
 #include "opt_multiprocessor.h"
 #include "opt_console.h"
 
+#include "arml2cc.h"
+
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.34 2019/01/03 14:44:21 jmcneill Exp $");
 
@@ -48,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.34 2019/01/03 14:44:21 jmcneill
 #include <arm/cpufunc.h>
 
 #include <arm/cortex/a9tmr_var.h>
+#include <arm/cortex/pl310_var.h>
 
 #include <arm/amlogic/meson_uart.h>
 
@@ -161,6 +164,21 @@ meson_platform_bootstrap(void)
 	}
 }
 
+#if defined(SOC_MESON8B)
+#define	MESON8B_PL310_BASE	0xc4200000
+static void
+meson8b_platform_bootstrap(void)
+{
+
+#if NARML2CC > 0
+	const bus_space_handle_t pl310_bh = ((MESON8B_PL310_BASE - MESON_CORE_PBASE) + MESON_CORE_VBASE);
+	arml2cc_init(&arm_generic_bs_tag, pl310_bh, 0);
+#endif
+
+	meson_platform_bootstrap();
+}
+#endif
+
 static void
 meson_platform_reset(void)
 {
@@ -181,7 +199,7 @@ meson_platform_reset(void)
 #if defined(SOC_MESON8B)
 static const struct arm_platform meson8b_platform = {
 	.ap_devmap = meson_platform_devmap,
-	.ap_bootstrap = meson_platform_bootstrap,
+	.ap_bootstrap = meson8b_platform_bootstrap,
 	.ap_init_attach_args = meson_platform_init_attach_args,
 	.ap_device_register = meson_platform_device_register,
 	.ap_reset = meson_platform_reset,
