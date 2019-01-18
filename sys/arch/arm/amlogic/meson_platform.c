@@ -169,7 +169,7 @@ meson_platform_reset(void)
 
 	bus_space_map(bst, MESON_WATCHDOG_BASE, MESON_WATCHDOG_SIZE, 0, &bsh);
 
-	bus_space_write_4(bst, bsh, MESON_WATCHDOG_TC, 
+	bus_space_write_4(bst, bsh, MESON_WATCHDOG_TC,
 	    WATCHDOG_TC_CPUS | WATCHDOG_TC_ENABLE | __SHIFTIN(0xfff, WATCHDOG_TC_TCNT));
 	bus_space_write_4(bst, bsh, MESON_WATCHDOG_RESET, 0);
 
