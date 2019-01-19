@@ -69,6 +69,9 @@ struct meson_sdio_softc {
 	struct fdtbus_gpio_pin	*sc_gpio_wp;
 	int			sc_gpio_wp_inverted;
 
+	struct fdtbus_regulator	*sc_reg_vmmc;
+	struct fdtbus_regulator	*sc_reg_vqmmc;
+
 	bool			sc_non_removable;
 	bool			sc_broken_cd;
 
@@ -95,6 +98,7 @@ static int	meson_sdio_bus_power(sdmmc_chipset_handle_t, uint32_t);
 static int	meson_sdio_bus_clock(sdmmc_chipset_handle_t, int);
 static int	meson_sdio_bus_width(sdmmc_chipset_handle_t, int);
 static int	meson_sdio_bus_rod(sdmmc_chipset_handle_t, int);
+static int	meson_sdio_signal_voltage(sdmmc_chipset_handle_t, int);
 static void	meson_sdio_exec_command(sdmmc_chipset_handle_t,
 				     struct sdmmc_command *);
 static void	meson_sdio_card_enable_intr(sdmmc_chipset_handle_t, int);
@@ -115,6 +119,7 @@ static struct sdmmc_chip_functions meson_sdio_chip_functions = {
 	.bus_clock = meson_sdio_bus_clock,
 	.bus_width = meson_sdio_bus_width,
 	.bus_rod = meson_sdio_bus_rod,
+	.signal_voltage = meson_sdio_signal_voltage,
 	.exec_command = meson_sdio_exec_command,
 	.card_enable_intr = meson_sdio_card_enable_intr,
 	.card_intr_ack = meson_sdio_card_intr_ack,
@@ -205,13 +210,16 @@ meson_sdio_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": SDIO controller (port %c)\n", sc->sc_cur_port + 'A');
 
+	sc->sc_reg_vmmc = fdtbus_regulator_acquire(sc->sc_slot_phandle, "vmmc-supply");
+	sc->sc_reg_vqmmc = fdtbus_regulator_acquire(sc->sc_slot_phandle, "vqmmc-supply");
+
 	sc->sc_gpio_cd = fdtbus_gpio_acquire(sc->sc_slot_phandle, "cd-gpios",
 	    GPIO_PIN_INPUT);
 	sc->sc_gpio_wp = fdtbus_gpio_acquire(sc->sc_slot_phandle, "wp-gpios",
 	    GPIO_PIN_INPUT);
 
-	sc->sc_gpio_cd_inverted = of_hasprop(sc->sc_slot_phandle, "cd-inverted") ? 0 : 1;
-	sc->sc_gpio_wp_inverted = of_hasprop(sc->sc_slot_phandle, "wp-inverted") ? 0 : 1;
+	sc->sc_gpio_cd_inverted = of_hasprop(sc->sc_slot_phandle, "cd-inverted");
+	sc->sc_gpio_wp_inverted = of_hasprop(sc->sc_slot_phandle, "wp-inverted");
 
 	sc->sc_non_removable = of_hasprop(sc->sc_slot_phandle, "non-removable");
 	sc->sc_broken_cd = of_hasprop(sc->sc_slot_phandle, "broken-cd");
@@ -239,6 +247,7 @@ meson_sdio_attach_i(device_t self)
 	struct meson_sdio_softc *sc = device_private(self);
 	struct sdmmcbus_attach_args saa;
 
+	meson_sdio_signal_voltage(sc, SDMMC_SIGNAL_VOLTAGE_330);
 	meson_sdio_host_reset(sc);
 	meson_sdio_bus_clock(sc, 400);
 	meson_sdio_bus_width(sc, 1);
@@ -386,11 +395,15 @@ static int
 meson_sdio_card_detect(sdmmc_chipset_handle_t sch)
 {
 	struct meson_sdio_softc *sc = sch;
+	int val;
 
 	if (sc->sc_non_removable || sc->sc_broken_cd) {
 		return 1;
 	} else if (sc->sc_gpio_cd != NULL) {
-		return fdtbus_gpio_read(sc->sc_gpio_cd) ^ sc->sc_gpio_cd_inverted;
+		val = fdtbus_gpio_read(sc->sc_gpio_cd);
+		if (sc->sc_gpio_cd_inverted)
+			val = !val;
+		return val;
 	} else {
 		return 1;
 	}
@@ -400,9 +413,14 @@ static int
 meson_sdio_write_protect(sdmmc_chipset_handle_t sch)
 {
 	struct meson_sdio_softc *sc = sch;
+	int val;
 
-	if (sc->sc_gpio_wp != NULL)
-		return fdtbus_gpio_read(sc->sc_gpio_wp) ^ sc->sc_gpio_wp_inverted;
+	if (sc->sc_gpio_wp != NULL) {
+		val = fdtbus_gpio_read(sc->sc_gpio_wp);
+		if (sc->sc_gpio_wp_inverted)
+			val = !val;
+		return val;
+	}
 
 	return 0;
 }
@@ -446,6 +464,38 @@ static int
 meson_sdio_bus_rod(sdmmc_chipset_handle_t sch, int on)
 {
 	return ENOTSUP;
+}
+
+static int
+meson_sdio_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
+{
+	struct meson_sdio_softc *sc = sch;
+	u_int uvol;
+	int error;
+
+	if (sc->sc_reg_vqmmc == NULL)
+		return 0;
+
+	switch (signal_voltage) {
+	case SDMMC_SIGNAL_VOLTAGE_330:
+		uvol = 3300000;
+		break;
+	case SDMMC_SIGNAL_VOLTAGE_180:
+		uvol = 1800000;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	error = fdtbus_regulator_supports_voltage(sc->sc_reg_vqmmc, uvol, uvol);
+	if (error != 0)
+		return 0;
+
+	error = fdtbus_regulator_set_voltage(sc->sc_reg_vqmmc, uvol, uvol);
+	if (error != 0)
+		return error;
+
+	return fdtbus_regulator_enable(sc->sc_reg_vqmmc);
 }
 
 static void
