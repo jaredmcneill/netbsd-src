@@ -59,6 +59,7 @@ static const char * compatible[] = {
 static int
 meson_dwmac_reset(const int phandle)
 {
+#if notyet
 	struct fdtbus_gpio_pin *pin_reset;
 	const u_int *reset_delay_us;
 	bool reset_active_low;
@@ -82,6 +83,7 @@ meson_dwmac_reset(const int phandle)
 	delay(be32toh(reset_delay_us[1]));
 	fdtbus_gpio_write(pin_reset, val);
 	delay(be32toh(reset_delay_us[2]));
+#endif
 
 	return 0;
 }
