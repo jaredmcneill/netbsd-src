@@ -51,16 +51,20 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.34 2019/01/03 14:44:21 jmcneill
 
 #include <arm/cortex/a9tmr_var.h>
 #include <arm/cortex/pl310_var.h>
+#include <arm/cortex/scu_reg.h>
 
 #include <arm/amlogic/meson_uart.h>
 
-#include <arch/evbarm/fdt/platform.h>
+#include <evbarm/fdt/platform.h>
+#include <evbarm/fdt/machdep.h>
 
 #include <libfdt.h>
 
-#define	MESON_CORE_VBASE	KERNEL_IO_VBASE
-#define	MESON_CORE_PBASE	0xc0000000
-#define	MESON_CORE_SIZE		0x10000000
+#define	MESON_CORE_APB3_VBASE	KERNEL_IO_VBASE
+#define	MESON_CORE_APB3_PBASE	0xc0000000
+#define	MESON_CORE_APB3_SIZE	0x01300000
+
+#define MESON_CBUS_OFFSET	0x01100000
 
 #define	MESON_WATCHDOG_BASE	0xc1109900
 #define	MESON_WATCHDOG_SIZE	0x8
@@ -70,6 +74,32 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.34 2019/01/03 14:44:21 jmcneill
 #define	  WATCHDOG_TC_TCNT	__BITS(15,0)
 #define	 MESON_WATCHDOG_RESET	0x04
 #define	  WATCHDOG_RESET_COUNT	__BITS(15,0)
+
+#define MESON8B_ARM_VBASE	(MESON_CORE_APB3_VBASE + MESON_CORE_APB3_SIZE)
+#define	MESON8B_ARM_PBASE	0xc4200000
+#define MESON8B_ARM_SIZE	0x00200000
+#define MESON8B_ARM_PL310_BASE	0x00000000
+#define MESON8B_ARM_SCU_BASE	0x00100000
+
+#define MESON8B_AOBUS_VBASE	(MESON8B_ARM_VBASE + MESON8B_ARM_SIZE)
+#define	MESON8B_AOBUS_PBASE	0xc8100000
+#define MESON8B_AOBUS_SIZE	0x00100000
+
+#define MESON_AOBUS_PWR_CTRL0_REG	0xe0
+#define MESON_AOBUS_PWR_CTRL1_REG	0xe4
+#define MESON_AOBUS_PWR_MEM_PD0_REG	0xf4
+
+#define MESON_CBUS_CPU_CLK_CNTL_REG	0x419c
+
+
+#define MESON8B_SRAM_VBASE	(MESON8B_AOBUS_VBASE + MESON8B_AOBUS_SIZE)
+#define MESON8B_SRAM_PBASE	0xd9000000
+#define MESON8B_SRAM_SIZE	0x00010000	/* 0x10000 rounded up */
+
+#define MESON8B_SRAM_CPUCONF_OFFSET		0x1ff80
+#define MESON8B_SRAM_CPUCONF_CTRL_REG		0x00
+#define MESON8B_SRAM_CPUCONF_CPU_ADDR_REG(n)	(0x04 * (n))
+
 
 extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 extern struct bus_space arm_generic_bs_tag;
@@ -83,9 +113,18 @@ static const struct pmap_devmap *
 meson_platform_devmap(void)
 {
 	static const struct pmap_devmap devmap[] = {
-		DEVMAP_ENTRY(MESON_CORE_VBASE,
-			     MESON_CORE_PBASE,
-			     MESON_CORE_SIZE),
+		DEVMAP_ENTRY(MESON_CORE_APB3_VBASE,
+			     MESON_CORE_APB3_PBASE,
+			     MESON_CORE_APB3_SIZE),
+		DEVMAP_ENTRY(MESON8B_ARM_VBASE,
+			     MESON8B_ARM_PBASE,
+			     MESON8B_ARM_SIZE),
+		DEVMAP_ENTRY(MESON8B_AOBUS_VBASE,
+			     MESON8B_AOBUS_PBASE,
+			     MESON8B_AOBUS_SIZE),
+		DEVMAP_ENTRY(MESON8B_SRAM_VBASE,
+			     MESON8B_SRAM_PBASE,
+			     MESON8B_SRAM_SIZE),
 		DEVMAP_ENTRY_END
 	};
 
@@ -106,7 +145,7 @@ void
 meson_platform_early_putchar(char c)
 {
 #ifdef CONSADDR
-#define CONSADDR_VA	((CONSADDR - MESON_CORE_PBASE) + MESON_CORE_VBASE)
+#define CONSADDR_VA	((CONSADDR - MESON_CORE_APB3_PBASE) + MESON_CORE_APB3_VBASE)
 	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
 	    (volatile uint32_t *)CONSADDR_VA :
 	    (volatile uint32_t *)CONSADDR;
@@ -165,13 +204,12 @@ meson_platform_bootstrap(void)
 }
 
 #if defined(SOC_MESON8B)
-#define	MESON8B_PL310_BASE	0xc4200000
 static void
 meson8b_platform_bootstrap(void)
 {
 
 #if NARML2CC > 0
-	const bus_space_handle_t pl310_bh = ((MESON8B_PL310_BASE - MESON_CORE_PBASE) + MESON_CORE_VBASE);
+	const bus_space_handle_t pl310_bh = MESON8B_ARM_VBASE + MESON8B_ARM_PL310_BASE;
 	arml2cc_init(&arm_generic_bs_tag, pl310_bh, 0);
 #endif
 
@@ -196,6 +234,126 @@ meson_platform_reset(void)
 	}
 }
 
+#if defined(MULTIPROCESSOR)
+static void
+meson8b_mpinit_delay(u_int n)
+{
+	for (volatile int i = 0; i < n; i++)
+		;
+}
+
+static int
+cpu_enable_meson8b(int phandle)
+{
+	const bus_addr_t cbar = armreg_cbar_read();
+	bus_space_tag_t bst = &arm_generic_bs_tag;
+
+	const bus_space_handle_t scu_bsh =
+	    cbar - MESON8B_ARM_PBASE + MESON8B_ARM_VBASE;
+	const bus_space_handle_t cpuconf_bsh =
+	    MESON8B_SRAM_VBASE + MESON8B_SRAM_CPUCONF_OFFSET;
+	const bus_space_handle_t ao_bsh =
+	    MESON8B_AOBUS_VBASE;
+	const bus_space_handle_t cbus_bsh =
+	    MESON_CORE_APB3_VBASE + MESON_CBUS_OFFSET;
+	uint32_t pwr_sts, pwr_cntl0, pwr_cntl1, cpuclk, mempd0;
+	uint64_t mpidr;
+
+	fdtbus_get_reg64(phandle, 0, &mpidr, NULL);
+
+	const u_int cpuno = __SHIFTOUT(mpidr, MPIDR_AFF0);
+
+	bus_space_write_4(bst, cpuconf_bsh, MESON8B_SRAM_CPUCONF_CPU_ADDR_REG(cpuno),
+	    KERN_VTOPHYS((vaddr_t)cpu_mpstart));
+
+	pwr_sts = bus_space_read_4(bst, scu_bsh, SCU_CPU_PWR_STS);
+	pwr_sts &= ~(3 << (8 * cpuno));
+	bus_space_write_4(bst, scu_bsh, SCU_CPU_PWR_STS, pwr_sts);
+
+	pwr_cntl0 = bus_space_read_4(bst, ao_bsh, MESON_AOBUS_PWR_CTRL0_REG);
+	pwr_cntl0 &= ~((3 << 18) << ((cpuno - 1) * 2));
+	bus_space_write_4(bst, ao_bsh, MESON_AOBUS_PWR_CTRL0_REG, pwr_cntl0);
+
+	meson8b_mpinit_delay(5000);
+
+	cpuclk = bus_space_read_4(bst, cbus_bsh, MESON_CBUS_CPU_CLK_CNTL_REG);
+	cpuclk |= (1 << (24 + cpuno));
+	bus_space_write_4(bst, cbus_bsh, MESON_CBUS_CPU_CLK_CNTL_REG, cpuclk);
+
+	mempd0 = bus_space_read_4(bst, ao_bsh, MESON_AOBUS_PWR_MEM_PD0_REG);
+	mempd0 &= ~((uint32_t)(0xf << 28) >> ((cpuno - 1) * 4));
+	bus_space_write_4(bst, ao_bsh, MESON_AOBUS_PWR_MEM_PD0_REG, mempd0);
+
+	pwr_cntl1 = bus_space_read_4(bst, ao_bsh, MESON_AOBUS_PWR_CTRL1_REG);
+	pwr_cntl1 &= ~((3 << 4) << ((cpuno - 1) * 2));
+	bus_space_write_4(bst, ao_bsh, MESON_AOBUS_PWR_CTRL1_REG, pwr_cntl1);
+
+	meson8b_mpinit_delay(10000);
+
+	for (;;) {
+		pwr_cntl1 = bus_space_read_4(bst, ao_bsh,
+		    MESON_AOBUS_PWR_CTRL1_REG) & ((1 << 17) << (cpuno - 1));
+		if (pwr_cntl1)
+			break;
+		meson8b_mpinit_delay(10000);
+	}
+
+	pwr_cntl0 = bus_space_read_4(bst, ao_bsh, MESON_AOBUS_PWR_CTRL0_REG);
+	pwr_cntl0 &= ~(1 << cpuno);
+	bus_space_write_4(bst, ao_bsh, MESON_AOBUS_PWR_CTRL0_REG, pwr_cntl0);
+
+	cpuclk = bus_space_read_4(bst, cbus_bsh, MESON_CBUS_CPU_CLK_CNTL_REG);
+	cpuclk &= ~(1 << (24 + cpuno));
+	bus_space_write_4(bst, cbus_bsh, MESON_CBUS_CPU_CLK_CNTL_REG, cpuclk);
+
+	bus_space_write_4(bst, cpuconf_bsh, MESON8B_SRAM_CPUCONF_CPU_ADDR_REG(cpuno),
+	    KERN_VTOPHYS((vaddr_t)cpu_mpstart));
+
+	uint32_t ctrl = bus_space_read_4(bst, cpuconf_bsh, MESON8B_SRAM_CPUCONF_CTRL_REG);
+	ctrl |= __BITS(cpuno,0);
+	bus_space_write_4(bst, cpuconf_bsh, MESON8B_SRAM_CPUCONF_CTRL_REG, ctrl);
+
+	return 0;
+}
+
+ARM_CPU_METHOD(meson8b, "amlogic,meson8b-smp", cpu_enable_meson8b);
+#endif
+
+static void
+meson_mpstart(void)
+{
+#ifdef MULTIPROCESSOR
+	const bus_addr_t cbar = armreg_cbar_read();
+	bus_space_tag_t bst = &arm_generic_bs_tag;
+
+	if (cbar == 0)
+		return;
+
+	const bus_space_handle_t scu_bsh =
+	    cbar - MESON8B_ARM_PBASE + MESON8B_ARM_VBASE;
+
+	const uint32_t scu_cfg = bus_space_read_4(bst, scu_bsh, SCU_CFG);
+	const u_int ncpus = (scu_cfg & SCU_CFG_CPUMAX) + 1;
+
+	if (ncpus < 2)
+		return;
+
+	/*
+	 * Invalidate all SCU cache tags. That is, for all cores (0-3)
+	 */
+	bus_space_write_4(bst, scu_bsh, SCU_INV_ALL_REG, 0xffff);
+
+	uint32_t scu_ctl = bus_space_read_4(bst, scu_bsh, SCU_CTL);
+	scu_ctl |= SCU_CTL_SCU_ENA;
+	bus_space_write_4(bst, scu_bsh, SCU_CTL, scu_ctl);
+
+	armv7_dcache_wbinv_all();
+
+	arm_fdt_cpu_mpstart();
+#endif
+}
+
+
 #if defined(SOC_MESON8B)
 static const struct arm_platform meson8b_platform = {
 	.ap_devmap = meson_platform_devmap,
@@ -205,6 +363,7 @@ static const struct arm_platform meson8b_platform = {
 	.ap_reset = meson_platform_reset,
 	.ap_delay = a9tmr_delay,
 	.ap_uart_freq = meson_platform_uart_freq,
+	.ap_mpstart = meson_mpstart,
 };
 
 ARM_PLATFORM(meson8b, "amlogic,meson8b", &meson8b_platform);
