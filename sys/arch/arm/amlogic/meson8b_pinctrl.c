@@ -159,6 +159,170 @@ enum {
 	GPIO_TEST_N,
 };
 
+#define	CBUS_GPIO(_id, _gpiobase, _gpiobit, _pullbase, _pullbit)	\
+	[_id] = {							\
+		.id = (_id),						\
+		.name = __STRING(_id),					\
+		.oen = {						\
+			.type = MESON_PINCTRL_REGTYPE_GPIO,		\
+			.reg = CBUS_REG((_gpiobase) + 0),		\
+			.mask = __BIT(_gpiobit)				\
+		},							\
+		.out = {						\
+			.type = MESON_PINCTRL_REGTYPE_GPIO,		\
+			.reg = CBUS_REG((_gpiobase) + 1),		\
+			.mask = __BIT(_gpiobit)				\
+		},							\
+		.in = {							\
+			.type = MESON_PINCTRL_REGTYPE_GPIO,		\
+			.reg = CBUS_REG((_gpiobase) + 2),		\
+			.mask = __BIT(_gpiobit)				\
+		},							\
+		.pupden = {						\
+			.type = MESON_PINCTRL_REGTYPE_PULL_ENABLE,	\
+			.reg = CBUS_REG(_pullbase),			\
+			.mask = __BIT(_pullbit)				\
+		},							\
+		.pupd = {						\
+			.type = MESON_PINCTRL_REGTYPE_PULL,		\
+			.reg = CBUS_REG(_pullbase),			\
+			.mask = __BIT(_pullbit)				\
+		},							\
+	}
+
+static const struct meson_pinctrl_gpio meson8b_cbus_gpios[] = {
+	/* GPIOX */
+	CBUS_GPIO(GPIOX_0, 0, 0, 4, 0),
+	CBUS_GPIO(GPIOX_1, 0, 1, 4, 1),
+	CBUS_GPIO(GPIOX_2, 0, 2, 4, 2),
+	CBUS_GPIO(GPIOX_3, 0, 3, 4, 3),
+	CBUS_GPIO(GPIOX_4, 0, 4, 4, 4),
+	CBUS_GPIO(GPIOX_5, 0, 5, 4, 5),
+	CBUS_GPIO(GPIOX_6, 0, 6, 4, 6),
+	CBUS_GPIO(GPIOX_7, 0, 7, 4, 7),
+	CBUS_GPIO(GPIOX_8, 0, 8, 4, 8),
+	CBUS_GPIO(GPIOX_9, 0, 9, 4, 9),
+	CBUS_GPIO(GPIOX_10, 0, 10, 4, 10),
+	CBUS_GPIO(GPIOX_11, 0, 11, 4, 11),
+	CBUS_GPIO(GPIOX_16, 0, 16, 4, 16),
+	CBUS_GPIO(GPIOX_17, 0, 17, 4, 17),
+	CBUS_GPIO(GPIOX_18, 0, 18, 4, 18),
+	CBUS_GPIO(GPIOX_19, 0, 19, 4, 19),
+	CBUS_GPIO(GPIOX_20, 0, 20, 4, 20),
+	CBUS_GPIO(GPIOX_21, 0, 21, 4, 21),
+
+	/* GPIOY */
+	CBUS_GPIO(GPIOY_0, 3, 0, 3, 0),
+	CBUS_GPIO(GPIOY_1, 3, 1, 3, 1),
+	CBUS_GPIO(GPIOY_3, 3, 3, 3, 3),
+	CBUS_GPIO(GPIOY_6, 3, 6, 3, 6),
+	CBUS_GPIO(GPIOY_7, 3, 7, 3, 7),
+	CBUS_GPIO(GPIOY_8, 3, 8, 3, 8),
+	CBUS_GPIO(GPIOY_9, 3, 9, 3, 9),
+	CBUS_GPIO(GPIOY_10, 3, 10, 3, 10),
+	CBUS_GPIO(GPIOY_11, 3, 11, 3, 11),
+	CBUS_GPIO(GPIOY_12, 3, 12, 3, 12),
+	CBUS_GPIO(GPIOY_13, 3, 13, 3, 13),
+	CBUS_GPIO(GPIOY_14, 3, 14, 3, 14),
+
+	/* GPIODV */
+	CBUS_GPIO(GPIODV_24, 6, 24, 0, 24),
+	CBUS_GPIO(GPIODV_25, 6, 25, 0, 25),
+	CBUS_GPIO(GPIODV_26, 6, 26, 0, 26),
+	CBUS_GPIO(GPIODV_27, 6, 27, 0, 27),
+	CBUS_GPIO(GPIODV_28, 6, 28, 0, 28),
+	CBUS_GPIO(GPIODV_29, 6, 29, 0, 29),
+
+	/* GPIOH */
+	CBUS_GPIO(GPIOH_0, 9, 19, 1, 16),
+	CBUS_GPIO(GPIOH_1, 9, 20, 1, 17),
+	CBUS_GPIO(GPIOH_2, 9, 21, 1, 18),
+	CBUS_GPIO(GPIOH_3, 9, 22, 1, 19),
+	CBUS_GPIO(GPIOH_4, 9, 23, 1, 20),
+	CBUS_GPIO(GPIOH_5, 9, 24, 1, 21),
+	CBUS_GPIO(GPIOH_6, 9, 25, 1, 22),
+	CBUS_GPIO(GPIOH_7, 9, 26, 1, 23),
+	CBUS_GPIO(GPIOH_8, 9, 27, 1, 24),
+	CBUS_GPIO(GPIOH_9, 9, 28, 1, 25),
+
+	/* BOOT */
+	CBUS_GPIO(BOOT_0, 9, 0, 2, 0),
+	CBUS_GPIO(BOOT_1, 9, 1, 2, 1),
+	CBUS_GPIO(BOOT_2, 9, 2, 2, 2),
+	CBUS_GPIO(BOOT_3, 9, 3, 2, 3),
+	CBUS_GPIO(BOOT_4, 9, 4, 2, 4),
+	CBUS_GPIO(BOOT_5, 9, 5, 2, 5),
+	CBUS_GPIO(BOOT_6, 9, 6, 2, 6),
+	CBUS_GPIO(BOOT_7, 9, 7, 2, 7),
+	CBUS_GPIO(BOOT_8, 9, 8, 2, 8),
+	CBUS_GPIO(BOOT_9, 9, 9, 2, 9),
+	CBUS_GPIO(BOOT_10, 9, 10, 2, 10),
+	CBUS_GPIO(BOOT_11, 9, 11, 2, 11),
+	CBUS_GPIO(BOOT_12, 9, 12, 2, 12),
+	CBUS_GPIO(BOOT_13, 9, 13, 2, 13),
+	CBUS_GPIO(BOOT_14, 9, 14, 2, 14),
+	CBUS_GPIO(BOOT_15, 9, 15, 2, 15),
+	CBUS_GPIO(BOOT_18, 9, 18, 2, 18),
+
+	/* CARD */
+	CBUS_GPIO(CARD_0, 0, 22, 2, 20),
+	CBUS_GPIO(CARD_1, 0, 23, 2, 21),
+	CBUS_GPIO(CARD_2, 0, 24, 2, 22),
+	CBUS_GPIO(CARD_3, 0, 25, 2, 23),
+	CBUS_GPIO(CARD_4, 0, 26, 2, 24),
+	CBUS_GPIO(CARD_5, 0, 27, 2, 25),
+	CBUS_GPIO(CARD_6, 0, 28, 2, 26),
+};
+
+#define	AO_GPIO(_id, _bit)						\
+	[_id] = {							\
+		.id = (_id),						\
+		.name = __STRING(_id),					\
+		.oen = {						\
+			.type = MESON_PINCTRL_REGTYPE_GPIO,		\
+			.reg = 0,					\
+			.mask = __BIT(_bit)				\
+		},							\
+		.out = {						\
+			.type = MESON_PINCTRL_REGTYPE_GPIO,		\
+			.reg = 0,					\
+			.mask = __BIT(_bit + 16)			\
+		},							\
+		.in = {							\
+			.type = MESON_PINCTRL_REGTYPE_GPIO,		\
+			.reg = 4,					\
+			.mask = __BIT(_bit)				\
+		},							\
+		.pupden = {						\
+			.type = MESON_PINCTRL_REGTYPE_PULL,		\
+			.reg = 0,					\
+			.mask = __BIT(_bit)				\
+		},							\
+		.pupd = {						\
+			.type = MESON_PINCTRL_REGTYPE_PULL,		\
+			.reg = 0,					\
+			.mask = __BIT(_bit + 16)			\
+		},							\
+	}
+
+static const struct meson_pinctrl_gpio meson8b_aobus_gpios[] = {
+	/* GPIOAO */
+	AO_GPIO(GPIOAO_0, 0),
+	AO_GPIO(GPIOAO_1, 1),
+	AO_GPIO(GPIOAO_2, 2),
+	AO_GPIO(GPIOAO_3, 3),
+	AO_GPIO(GPIOAO_4, 4),
+	AO_GPIO(GPIOAO_5, 5),
+	AO_GPIO(GPIOAO_6, 6),
+	AO_GPIO(GPIOAO_7, 7),
+	AO_GPIO(GPIOAO_8, 8),
+	AO_GPIO(GPIOAO_9, 9),
+	AO_GPIO(GPIOAO_10, 10),
+	AO_GPIO(GPIOAO_11, 11),
+	AO_GPIO(GPIOAO_12, 12),
+	AO_GPIO(GPIOAO_13, 13),
+};
+
 static const struct meson_pinctrl_group meson8b_cbus_groups[] = {
 	/* GPIOX */
 	{ "sd_d0_a",		REG8,	5,	{ GPIOX_0 }, 1 },
@@ -319,12 +483,6 @@ static const struct meson_pinctrl_group meson8b_cbus_groups[] = {
 	{ "eth_mdio_en",	REG6,	10,	{ DIF_4_N }, 1 },
 };
 
-#if 0
-static const struct meson_pinctrl_gpio meson8b_cbus_gpios[] = {
-	[GPIOX_0] = { 0
-};
-#endif
-
 static const struct meson_pinctrl_group meson8b_aobus_groups[] = {
 	/* GPIOAO */
 	{ "uart_tx_ao_a",	REG,	12,	{ GPIOAO_0 }, 1 },
@@ -361,10 +519,14 @@ const struct meson_pinctrl_config meson8b_cbus_pinctrl_config = {
 	.name = "Meson8b CBUS GPIO",
 	.groups = meson8b_cbus_groups,
 	.ngroups = __arraycount(meson8b_cbus_groups),
+	.gpios = meson8b_cbus_gpios,
+	.ngpios = __arraycount(meson8b_cbus_gpios),
 };
 
 const struct meson_pinctrl_config meson8b_aobus_pinctrl_config = {
 	.name = "Meson8b AO GPIO",
 	.groups = meson8b_aobus_groups,
 	.ngroups = __arraycount(meson8b_aobus_groups),
+	.gpios = meson8b_aobus_gpios,
+	.ngpios = __arraycount(meson8b_aobus_gpios),
 };

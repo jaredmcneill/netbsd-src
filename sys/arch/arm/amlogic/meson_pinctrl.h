@@ -35,10 +35,26 @@
 
 #define	MESON_PINCTRL_MAXBANK	8
 
-struct meson_pinctrl_gpio {
-	const char *name;
+enum meson_pinctrl_regtype {
+	MESON_PINCTRL_REGTYPE_PULL,
+	MESON_PINCTRL_REGTYPE_PULL_ENABLE,
+	MESON_PINCTRL_REGTYPE_GPIO,
+};
+
+struct meson_pinctrl_gpioreg {
+	enum meson_pinctrl_regtype type;
 	bus_size_t reg;
-	u_int bit;
+	uint32_t mask;
+};
+
+struct meson_pinctrl_gpio {
+	u_int id;
+	const char *name;
+	struct meson_pinctrl_gpioreg oen;
+	struct meson_pinctrl_gpioreg out;
+	struct meson_pinctrl_gpioreg in;
+	struct meson_pinctrl_gpioreg pupden;
+	struct meson_pinctrl_gpioreg pupd;
 };
 
 struct meson_pinctrl_group {
