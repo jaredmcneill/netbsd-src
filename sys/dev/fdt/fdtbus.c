@@ -345,6 +345,24 @@ fdt_remove_bycompat(const char *compatible[])
 	}
 }
 
+int
+fdt_find_with_property(const char *prop, int *pindex)
+{
+	struct fdt_node *node;
+	int index = 0;
+
+	TAILQ_FOREACH(node, &fdt_nodes, n_nodes) {
+		if (index < *pindex)
+			continue;
+		if (of_hasprop(node->n_phandle, prop)) {
+			*pindex = index;
+			return node->n_phandle;
+		}
+	}
+
+	return -1;
+}
+
 static u_int
 fdt_get_order(int phandle)
 {
