@@ -318,7 +318,7 @@ arm_fdt_cpu_mpstart(void)
 		__asm __volatile("sev" ::: "memory");
 
 		/* Wait for AP to start */
-		for (i = 0x100000; i > 0; i--) {
+		for (i = 0x10000000; i > 0; i--) {
 			membar_consumer();
 			if (arm_cpu_hatched & __BIT(cpuindex))
 				break;
