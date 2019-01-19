@@ -307,6 +307,7 @@ tegratimer*	at fdt?			# Timers
 
 # Watchdog
 dwcwdt* 	at fdt?			# DesignWare watchdog
+mesonwdt*	at fdt?			# Amlogic Meson watchdog
 sunxiwdt*	at fdt?			# Allwinner watchdog
 watchdog*	at fdt?			# Broadcom BCM283x watchdog
 

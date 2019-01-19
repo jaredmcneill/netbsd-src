@@ -68,9 +68,9 @@ attach	awge at fdt with meson_dwmac
 file	arch/arm/amlogic/meson_dwmac.c		meson_dwmac
 
 # Watchdog
-#device	mesonwdt: sysmon_wdog
-#attach	mesonwdt at fdt with meson_wdt
-#file	arch/arm/amlogic/meson_wdt.c		meson_wdt
+device	mesonwdt: sysmon_wdog
+attach	mesonwdt at fdt with meson_wdt
+file	arch/arm/amlogic/meson_wdt.c		meson_wdt
 
 # SOC parameters
 defflag	opt_soc.h			SOC_MESON
