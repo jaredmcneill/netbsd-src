@@ -50,6 +50,7 @@ cpu*		at fdt? pass 0
 
 # Clock and reset controllers
 meson8bclkc*	at fdt? pass 2		# Amlogic Meson8b clock controller
+mesonresets*	at fdt? pass 2		# Amlogic Meson misc. clock resets
 
 #a9wdt0 	at armperiph?			# Watchdog
 
@@ -57,13 +58,13 @@ meson8bclkc*	at fdt? pass 2		# Amlogic Meson8b clock controller
 a9tmr* 		at fdt? pass 2		# ARM Cortex A5/A9 Timer
 arma9tmr* 	at a9tmr?
 
-# Level 2 Cache Controller
-l2cc* 		at fdt? pass 2		# ARM Cortex A9 L2 Cache Controller
-arml2cc* 	at l2cc?
-
 # Interrupt controller
 gic*		at fdt? pass 1		# ARM GIC
 armgic0		at gic?
+
+# Level 2 Cache Controller
+l2cc* 		at fdt? pass 2		# ARM Cortex A9 L2 Cache Controller
+arml2cc* 	at l2cc?
 
 fclock*		at fdt? pass 1
 ffclock*	at fdt? pass 1
@@ -78,6 +79,15 @@ mesonuart*	at fdt?			# Amlogic Meson UART
 
 # GPIO controller
 mesonpinctrl*	at fdt? pass 2		# Amlogic Meson GPIO
+
+# SDMMC
+mesonsdio*	at fdt?			# Amlogic Meson SDIO controller
+sdmmc*		at sdmmcbus?
+ld0		at sdmmc0
+ld1		at sdmmc1
+ld2		at sdmmc2
+ld3		at sdmmc3
+ld*		at sdmmc?
 
 # Framebuffer
 #genfb0		at amlogicio0
@@ -101,15 +111,6 @@ mesonrng*	at fdt?			# Amlogic Meson RNG
 
 # Real-time clock
 #amlogicrtc0	at amlogicio0
-
-# SDHC controller
-#amlogicsdhc0	at amlogicio0
-#amlogicsdio0	at amlogicio0
-#sdmmc0		at amlogicsdhc0
-#sdmmc1		at amlogicsdio0
-#ld0		at sdmmc0
-#ld1		at sdmmc1
-#ld*		at sdmmc?
 
 # Gigabit ethernet
 awge*		at fdt?			# Allwinner Gigabit Ethernet (GMAC)
