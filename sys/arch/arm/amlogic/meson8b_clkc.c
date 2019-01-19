@@ -92,12 +92,12 @@ static struct meson_clk_clk meson8b_clkc_clks[] = {
 	MESON_CLK_FIXED(MESON8B_CLOCK_XTAL, "xtal", 24000000),
 
 	MESON_CLK_PLL(MESON8B_CLOCK_PLL_SYS_DCO, "pll_sys_dco", "xtal",
-	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL, __BIT(30)),	/* enable */
-	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL, __BITS(8,0)),	/* m */
-	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL, __BITS(13,9)),	/* n */
+	    MESON_CLK_PLL_REG(HHI_SYS_PLL_CNTL, __BIT(30)),	/* enable */
+	    MESON_CLK_PLL_REG(HHI_SYS_PLL_CNTL, __BITS(8,0)),	/* m */
+	    MESON_CLK_PLL_REG(HHI_SYS_PLL_CNTL, __BITS(13,9)),	/* n */
 	    MESON_CLK_PLL_REG_INVALID,				/* frac */
-	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL, __BIT(31)),	/* l */
-	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL, __BIT(29)),	/* reset */
+	    MESON_CLK_PLL_REG(HHI_SYS_PLL_CNTL, __BIT(31)),	/* l */
+	    MESON_CLK_PLL_REG(HHI_SYS_PLL_CNTL, __BIT(29)),	/* reset */
 	    0),
 
 	MESON_CLK_DIV(MESON8B_CLOCK_PLL_SYS, "sys_pll", "pll_sys_dco",
