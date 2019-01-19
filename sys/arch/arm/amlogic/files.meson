@@ -49,9 +49,9 @@ attach	mesonsdio at fdt with meson_sdio
 file	arch/arm/amlogic/meson_sdio.c		meson_sdio
 
 # USB PHY
-#device	mesonusbphy
-#attach	mesonusbphy at fdt with meson_usbphy
-#file	arch/arm/amlogic/meson_usbphy.c		meson_usbphy
+device	mesonusbphy
+attach	mesonusbphy at fdt with meson_usbphy
+file	arch/arm/amlogic/meson_usbphy.c		meson_usbphy
 
 # RTC
 #device	mesonrtc
