@@ -118,10 +118,11 @@ rgephy*		at mii? phy ?
 ukphy*		at mii? phy ?
 
 # USB
+mesonusbphy*	at fdt? pass 9		# Amlogic Meson USB2 PHY
 dwctwo*		at fdt?			# Designware USB DRD
 usb*		at dwctwo?
 include "dev/usb/usbdevices.config"
+
 midi*		at midibus?
 
 cinclude "arch/evbarm/conf/ODROID-C1.local"
-
