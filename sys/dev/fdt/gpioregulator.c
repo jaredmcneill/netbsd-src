@@ -100,6 +100,7 @@ gpioregulator_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	const uint32_t *pstates;
 	uint32_t mask;
+	u_int gpios_states;
 	char *name;
 	int len, n;
 
@@ -162,6 +163,14 @@ gpioregulator_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 	}
+
+	/* "gpios-states" property */
+	if (of_getprop_uint32(phandle, "gpios-states", &gpios_states) != 0)
+		gpios_states = 0;
+
+	/* Set initial state */
+	for (n = 0; n < sc->sc_npins; n++)
+		fdtbus_gpio_write(sc->sc_pins[n], (gpios_states >> n) & 1);
 
 	fdtbus_register_regulator_controller(self, phandle,
 	    &gpioregulator_funcs);
