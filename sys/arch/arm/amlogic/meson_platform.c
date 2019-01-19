@@ -145,7 +145,7 @@ void
 meson_platform_early_putchar(char c)
 {
 #ifdef CONSADDR
-#define CONSADDR_VA	((CONSADDR - MESON_CORE_APB3_PBASE) + MESON_CORE_APB3_VBASE)
+#define CONSADDR_VA	((CONSADDR - MESON8B_AOBUS_PBASE) + MESON8B_AOBUS_VBASE)
 	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
 	    (volatile uint32_t *)CONSADDR_VA :
 	    (volatile uint32_t *)CONSADDR;
