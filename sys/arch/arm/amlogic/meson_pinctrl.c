@@ -227,7 +227,7 @@ meson_pinctrl_pin_write(void *priv, int pin, int val)
 {
 	struct meson_pinctrl_softc * const sc = priv;
 	const struct meson_pinctrl_gpio *pin_def = &sc->sc_conf->gpios[pin];
-	const struct meson_pinctrl_gpioreg *gpio_reg = &pin_def->in;
+	const struct meson_pinctrl_gpioreg *gpio_reg = &pin_def->out;
 	bus_space_handle_t bsh;
 	uint32_t data;
 
