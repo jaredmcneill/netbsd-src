@@ -57,6 +57,8 @@ meson_clk_pll_get_rate(struct meson_clk_softc *sc,
 	if (parent_rate == 0)
 		return 0;
 
+	CLK_LOCK(sc);
+
 	val = CLK_READ(sc, pll->n.reg);
 	n = __SHIFTOUT(val, pll->n.mask);
 
@@ -69,6 +71,8 @@ meson_clk_pll_get_rate(struct meson_clk_softc *sc,
 	} else {
 		frac = 0;
 	}
+
+	CLK_UNLOCK(sc);
 
 	rate = parent_rate * m;
 	if (frac) {

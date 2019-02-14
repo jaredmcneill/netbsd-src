@@ -99,6 +99,7 @@ meson8b_clkc_pll_sys_set_rate(struct meson_clk_softc *sc,
     struct meson_clk_clk *clk, u_int rate)
 {
 	struct clk *clkp, *clkp_parent;
+	int error;
 
 	KASSERT(clk->type == MESON_CLK_PLL);
 
@@ -115,6 +116,8 @@ meson8b_clkc_pll_sys_set_rate(struct meson_clk_softc *sc,
 	if (parent_rate == 0)
 		return EIO;
 
+	CLK_LOCK(sc);
+
 	uint32_t cntl0 = CLK_READ(sc, HHI_SYS_CPU_CLK_CNTL0);
 	uint32_t cntl = CLK_READ(sc, HHI_SYS_PLL_CNTL);
 
@@ -130,12 +133,18 @@ meson8b_clkc_pll_sys_set_rate(struct meson_clk_softc *sc,
 		new_mul *= 2;
 	}
 
-	if ((cntl0 & HHI_SYS_CPU_CLK_CNTL0_CLKSEL) == 0)
-		return EIO;
-	if (__SHIFTOUT(cntl0, HHI_SYS_CPU_CLK_CNTL0_PLLSEL) != 1)
-		return EIO;
-	if (__SHIFTOUT(cntl0, HHI_SYS_CPU_CLK_CNTL0_SOUTSEL) != 0)
-		return EIO;
+	if ((cntl0 & HHI_SYS_CPU_CLK_CNTL0_CLKSEL) == 0) {
+		error = EIO;
+		goto done;
+	}
+	if (__SHIFTOUT(cntl0, HHI_SYS_CPU_CLK_CNTL0_PLLSEL) != 1) {
+		error = EIO;
+		goto done;
+	}
+	if (__SHIFTOUT(cntl0, HHI_SYS_CPU_CLK_CNTL0_SOUTSEL) != 0) {
+		error = EIO;
+		goto done;
+	}
 
 	cntl &= ~HHI_SYS_PLL_CNTL_MUL;
 	cntl |= __SHIFTIN(new_mul, HHI_SYS_PLL_CNTL_MUL);
@@ -159,7 +168,12 @@ meson8b_clkc_pll_sys_set_rate(struct meson_clk_softc *sc,
 		CLK_WRITE(sc, HHI_SYS_CPU_CLK_CNTL0, cntl0);
 	} while ((CLK_READ(sc, HHI_SYS_PLL_CNTL) & HHI_SYS_PLL_CNTL_LOCK) == 0);
 
-	return 0;
+	error = 0;
+
+done:
+	CLK_UNLOCK(sc);
+
+	return error;
 }
 
 static struct meson_clk_clk meson8b_clkc_clks[] = {

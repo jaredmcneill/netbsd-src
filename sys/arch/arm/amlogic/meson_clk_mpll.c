@@ -58,11 +58,15 @@ meson_clk_mpll_get_rate(struct meson_clk_softc *sc,
 	if (parent_rate == 0)
 		return 0;
 
+	CLK_LOCK(sc);
+
 	val = CLK_READ(sc, mpll->sdm.reg);
 	sdm = __SHIFTOUT(val, mpll->sdm.mask);
 
 	val = CLK_READ(sc, mpll->n2.reg);
 	n2 = __SHIFTOUT(val, mpll->n2.mask);
+
+	CLK_UNLOCK(sc);
 
 	const uint64_t div = (SDM_DEN * n2) + sdm;
 	if (div == 0)

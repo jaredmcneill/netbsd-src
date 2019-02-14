@@ -45,7 +45,10 @@ meson_clk_mux_get_parent(struct meson_clk_softc *sc, struct meson_clk_clk *clk)
 
 	KASSERT(clk->type == MESON_CLK_MUX);
 
+	CLK_LOCK(sc);
 	val = CLK_READ(sc, mux->reg);
+	CLK_UNLOCK(sc);
+
 	sel = __SHIFTOUT(val, mux->sel);
 	if (sel >= mux->nparents)
 		return NULL;
