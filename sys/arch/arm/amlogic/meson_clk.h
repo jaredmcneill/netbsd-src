@@ -350,7 +350,7 @@ struct meson_clk_softc {
 	u_int			sc_nclks;
 };
 
-int	meson_clk_attach(struct meson_clk_softc *, u_int);
+void	meson_clk_attach(struct meson_clk_softc *);
 struct meson_clk_clk *meson_clk_clock_find(struct meson_clk_softc *,
 					   const char *);
 void	meson_clk_print(struct meson_clk_softc *);

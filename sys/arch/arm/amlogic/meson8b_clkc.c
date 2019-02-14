@@ -319,10 +319,20 @@ meson8b_clkc_attach(device_t parent, device_t self, void *aux)
 {
 	struct meson_clk_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	bus_addr_t addr;
+	bus_size_t size;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
 	sc->sc_bst = faa->faa_bst;
+	if (fdtbus_get_reg(sc->sc_phandle, MESON8B_CLKC_REG_INDEX, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
+	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
+		aprint_error(": couldn't map registers\n");
+		return;
+	}
 
 	sc->sc_resets = meson8b_clkc_resets;
 	sc->sc_nresets = __arraycount(meson8b_clkc_resets);
@@ -330,8 +340,7 @@ meson8b_clkc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_clks = meson8b_clkc_clks;
 	sc->sc_nclks = __arraycount(meson8b_clkc_clks);
 
-	if (meson_clk_attach(sc, MESON8B_CLKC_REG_INDEX) != 0)
-		return;
+	meson_clk_attach(sc);
 
 	aprint_naive("\n");
 	aprint_normal(": Meson8b clock controller\n");

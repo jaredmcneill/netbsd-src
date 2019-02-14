@@ -298,21 +298,10 @@ meson_clk_clock_find(struct meson_clk_softc *sc, const char *name)
 	return NULL;
 }
 
-int
-meson_clk_attach(struct meson_clk_softc *sc, u_int reg_index)
+void
+meson_clk_attach(struct meson_clk_softc *sc)
 {
-	bus_addr_t addr;
-	bus_size_t size;
 	int i;
-
-	if (fdtbus_get_reg(sc->sc_phandle, reg_index, &addr, &size) != 0) {
-		aprint_error(": couldn't get registers\n");
-		return ENXIO;
-	}
-	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
-		aprint_error(": couldn't map registers\n");
-		return ENXIO;
-	}
 
 	sc->sc_clkdom.name = device_xname(sc->sc_dev);
 	sc->sc_clkdom.funcs = &meson_clk_clock_funcs;
@@ -322,13 +311,13 @@ meson_clk_attach(struct meson_clk_softc *sc, u_int reg_index)
 		clk_attach(&sc->sc_clks[i].base);
 	}
 
-	fdtbus_register_clock_controller(sc->sc_dev, sc->sc_phandle,
-	    &meson_clk_fdtclock_funcs);
+	if (sc->sc_nclks > 0)
+		fdtbus_register_clock_controller(sc->sc_dev, sc->sc_phandle,
+		    &meson_clk_fdtclock_funcs);
 
-	fdtbus_register_reset_controller(sc->sc_dev, sc->sc_phandle,
-	    &meson_clk_fdtreset_funcs);
-
-	return 0;
+	if (sc->sc_nresets > 0)
+		fdtbus_register_reset_controller(sc->sc_dev, sc->sc_phandle,
+		    &meson_clk_fdtreset_funcs);
 }
 
 void
