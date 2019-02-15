@@ -198,6 +198,7 @@ tegrapmc*	at fdt? pass 4		# NVIDIA Tegra PMC
 bcmcprman*	at fdt? pass 1		# Broadcom BCM283x Clock Manager
 bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 gxbbaoclkc*	at fdt? pass 2		# Amlogic Meson GXBB AO clock controller
+gxbbclkc*	at fdt? pass 2		# Amlogic Meson GXBB EE clock controller
 rkcru*		at fdt? pass 2		# Rockchip RK3328 CRU
 sun8ih3ccu*	at fdt? pass 2		# Allwinner H3/H5 CCU
 sun8ih3rccu*	at fdt? pass 2		# Allwinner H3/H5 CCU (PRCM)
@@ -213,6 +214,7 @@ tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
 
 # GPIO controller
 bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
+mesonpinctrl*	at fdt? pass 2		# Amlogic Meson GPIO
 plgpio*		at fdt?			# ARM PrimeCell PL061 GPIO
 plgpio*		at acpi?
 sunxigpio*	at fdt? pass 3		# Allwinner GPIO

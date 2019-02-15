@@ -22,6 +22,11 @@ device	meson8bclkc: meson_clk
 attach	meson8bclkc at fdt with meson8b_clkc
 file	arch/arm/amlogic/meson8b_clkc.c		meson8b_clkc
 
+# Meson GXBB clock controller
+device	gxbbclkc: meson_clk
+attach	gxbbclkc at fdt with mesongxbb_clkc
+file	arch/arm/amlogic/mesongxbb_clkc.c	mesongxbb_clkc
+
 # Meson GXBB AO clock controller
 device	gxbbaoclkc: meson_clk
 attach	gxbbaoclkc at fdt with mesongxbb_aoclkc
@@ -47,6 +52,7 @@ device	mesonpinctrl: gpiobus
 attach	mesonpinctrl at fdt with meson_pinctrl
 file	arch/arm/amlogic/meson_pinctrl.c	meson_pinctrl
 file	arch/arm/amlogic/meson8b_pinctrl.c	meson_pinctrl & soc_meson8b
+file	arch/arm/amlogic/mesongxbb_pinctrl.c	meson_pinctrl & soc_mesongxbb
 
 # SDHC
 device	mesonsdhc: sdmmcbus
@@ -85,3 +91,4 @@ file	arch/arm/amlogic/meson_wdt.c		meson_wdt
 # SOC parameters
 defflag	opt_soc.h			SOC_MESON
 defflag	opt_soc.h			SOC_MESON8B: SOC_MESON
+defflag	opt_soc.h			SOC_MESONGXBB: SOC_MESON
