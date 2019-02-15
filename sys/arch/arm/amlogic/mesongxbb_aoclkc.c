@@ -89,7 +89,6 @@ mesongxbb_aoclkc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
-	sc->sc_bst = faa->faa_bst;
 	sc->sc_syscon = fdtbus_syscon_lookup(OF_parent(sc->sc_phandle));
 	if (sc->sc_syscon == NULL) {
 		aprint_error(": couldn't get syscon registers\n");
