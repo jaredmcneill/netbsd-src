@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_resets.c,v 1.1 2019/01/19 20:56:03 jmcneill Ex
 
 static const char * compatible[] = {
 	"amlogic,meson8b-reset",
+	"amlogic,meson-gxbb-reset",
 	NULL
 };
 
