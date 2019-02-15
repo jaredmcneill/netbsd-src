@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp
 
 static const char * compatible[] = {
 	"amlogic,meson8b-dwmac",
+	"amlogic,meson-gx-dwmac",
 	NULL
 };
 
