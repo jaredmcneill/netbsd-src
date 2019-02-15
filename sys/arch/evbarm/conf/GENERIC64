@@ -14,10 +14,21 @@ include	"arch/evbarm/conf/GENERIC.common"
 #
 makeoptions 	DTSARCH="arm aarch64"
 makeoptions	DTSGNUARCH="arm arm64"
-makeoptions	DTSSUBDIR="allwinner broadcom nvidia rockchip"
+makeoptions	DTSSUBDIR="allwinner amlogic broadcom nvidia rockchip"
 makeoptions	DTS="
 	bcm2837-rpi-3-b.dts
 	bcm2837-rpi-3-b-plus.dts
+
+	meson-gxbb-nanopi-k2.dts
+	meson-gxbb-nexbox-a95x.dts
+	meson-gxbb-odroidc2.dts
+	meson-gxbb-p200.dts
+	meson-gxbb-p201.dts
+	meson-gxbb-vega-s95-meta.dts
+	meson-gxbb-vega-s95-pro.dts
+	meson-gxbb-vega-s95-telos.dts
+	meson-gxbb-wetek-hub.dts
+	meson-gxbb-wetek-play2.dts
 
 	rk3328-evb.dts
 	rk3328-roc-cc.dts
@@ -60,6 +71,7 @@ options 	CPU_CORTEXA53
 options 	CPU_CORTEXA57
 options 	CPU_THUNDERX
 options 	SOC_BCM2837
+options 	SOC_MESONGXBB
 options 	SOC_RK3328
 options 	SOC_RK3399
 options 	SOC_SUN50I_A64
@@ -185,6 +197,7 @@ tegrapmc*	at fdt? pass 4		# NVIDIA Tegra PMC
 # Clock and Reset controller
 bcmcprman*	at fdt? pass 1		# Broadcom BCM283x Clock Manager
 bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
+gxbbaoclkc*	at fdt? pass 2		# Amlogic Meson GXBB AO clock controller
 rkcru*		at fdt? pass 2		# Rockchip RK3328 CRU
 sun8ih3ccu*	at fdt? pass 2		# Allwinner H3/H5 CCU
 sun8ih3rccu*	at fdt? pass 2		# Allwinner H3/H5 CCU (PRCM)

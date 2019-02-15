@@ -183,7 +183,7 @@ meson_platform_device_register(device_t self, void *aux)
 		}
 	}
 
-	if (device_is_a(self, "genfb")) {
+	if (device_is_a(self, "mesonfb")) {
 		int scale, depth;
 
 		if (get_bootconf_option(boot_args, "fb.scale",

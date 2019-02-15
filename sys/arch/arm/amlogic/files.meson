@@ -22,6 +22,11 @@ device	meson8bclkc: meson_clk
 attach	meson8bclkc at fdt with meson8b_clkc
 file	arch/arm/amlogic/meson8b_clkc.c		meson8b_clkc
 
+# Meson GXBB AO clock controller
+device	gxbbaoclkc: meson_clk
+attach	gxbbaoclkc at fdt with mesongxbb_aoclkc
+file	arch/arm/amlogic/mesongxbb_aoclkc.c	mesongxbb_aoclkc
+
 # Meson reset controller
 device	mesonresets
 attach	mesonresets at fdt with meson_resets
@@ -33,7 +38,8 @@ attach	mesonuart at fdt with meson_uart
 file	arch/arm/amlogic/meson_uart.c		meson_uart
 
 # Framebuffer console
-attach	genfb at fdt with meson_genfb
+device	mesonfb
+attach	mesonfb at fdt with meson_genfb
 file	arch/arm/amlogic/meson_genfb.c		meson_genfb & soc_meson
 
 # GPIO

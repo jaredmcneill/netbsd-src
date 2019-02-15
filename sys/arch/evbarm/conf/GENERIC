@@ -549,7 +549,8 @@ hdmicec*	at hdmicecbus?
 #tegradrm*	at fdt?			# NVIDIA Tegra Display
 #tegrafb*	at tegrafbbus?
 genfb*		at fdt?			# Simple Framebuffer
-wsdisplay*	at genfb?
+mesonfb*	at fdt?			# Amlogic Meson Framebuffer
+wsdisplay*	at wsemuldisplaydev?
 sunxidebe*      at fdt? pass 4  # Display Backend
 genfb*          at sunxidebe?
 sunxitcon*      at fdt? pass 4  # LCD LVDS/RGB controller
