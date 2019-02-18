@@ -200,6 +200,7 @@ bcmcprman*	at fdt? pass 1		# Broadcom BCM283x Clock Manager
 bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 gxbbaoclkc*	at fdt? pass 2		# Amlogic Meson GXBB AO clock controller
 gxbbclkc*	at fdt? pass 2		# Amlogic Meson GXBB EE clock controller
+mesonresets*	at fdt? pass 2		# Amlogic Meson misc. clock resets
 rkcru*		at fdt? pass 2		# Rockchip RK3328 CRU
 sun8ih3ccu*	at fdt? pass 2		# Allwinner H3/H5 CCU
 sun8ih3rccu*	at fdt? pass 2		# Allwinner H3/H5 CCU (PRCM)
@@ -284,6 +285,7 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 # UART
 com*		at fdt?	pass 4			# UART
 com*		at acpi?
+mesonuart*	at fdt? pass 4			# Amlogic Meson UART
 plcom*		at fdt?	pass 4			# ARM PL011 UART
 plcom*		at acpi?
 puc*		at pci? dev ? function ?	# PCI "universal" comm. cards
