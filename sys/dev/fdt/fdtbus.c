@@ -79,7 +79,7 @@ static void	fdt_add_node(struct fdt_node *);
 static u_int	fdt_get_order(int);
 
 static const char * const fdtbus_compatible[] =
-    { "simple-bus", "simple-mfd", NULL };
+    { "simple-bus", NULL };
 
 CFATTACH_DECL2_NEW(simplebus, sizeof(struct fdt_softc),
     fdt_match, fdt_attach, NULL, NULL, fdt_rescan, fdt_childdet);

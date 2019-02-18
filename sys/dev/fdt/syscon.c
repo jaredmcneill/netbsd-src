@@ -54,6 +54,7 @@ static void	syscon_attach(device_t, device_t, void *);
 
 static const char *compatible[] = {
 	"syscon",
+	"simple-mfd",
 	NULL
 };
 
