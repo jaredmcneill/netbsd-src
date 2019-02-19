@@ -61,6 +61,7 @@ enum meson_usbphy_type {
 
 static const struct of_compat_data compat_data[] = {
 	{ "amlogic,meson8b-usb2-phy",		USBPHY_MESON8B },
+	{ "amlogic,meson-gxbb-usb2-phy",	USBPHY_MESON8B },
 	{ NULL }
 };
 
