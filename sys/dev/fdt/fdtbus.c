@@ -352,7 +352,7 @@ fdt_find_with_property(const char *prop, int *pindex)
 	int index = 0;
 
 	TAILQ_FOREACH(node, &fdt_nodes, n_nodes) {
-		if (index < *pindex)
+		if (index++ < *pindex)
 			continue;
 		if (of_hasprop(node->n_phandle, prop)) {
 			*pindex = index;
