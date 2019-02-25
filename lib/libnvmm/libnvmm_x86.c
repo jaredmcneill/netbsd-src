@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.22 2019/02/14 14:30:20 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.24 2019/02/17 20:25:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ typedef uint64_t pte_32bit_pae_t;
 
 static int
 x86_gva_to_gpa_32bit_pae(struct nvmm_machine *mach, uint64_t cr3,
-    gvaddr_t gva, gpaddr_t *gpa, bool has_pse, nvmm_prot_t *prot)
+    gvaddr_t gva, gpaddr_t *gpa, nvmm_prot_t *prot)
 {
 	gpaddr_t L3gpa, L2gpa, L1gpa;
 	uintptr_t L3hva, L2hva, L1hva;
@@ -224,8 +224,6 @@ x86_gva_to_gpa_32bit_pae(struct nvmm_machine *mach, uint64_t cr3,
 		*prot &= ~NVMM_PROT_WRITE;
 	if (pte & PG_NX)
 		*prot &= ~NVMM_PROT_EXEC;
-	if ((pte & PG_PS) && !has_pse)
-		return -1;
 	if (pte & PG_PS) {
 		*gpa = (pte & PTE32_PAE_L2_FRAME);
 		*gpa = *gpa + (gva & PTE32_PAE_L1_MASK);
@@ -408,8 +406,7 @@ x86_gva_to_gpa(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 		ret = x86_gva_to_gpa_64bit(mach, cr3, gva, gpa, prot);
 	} else if (is_pae && !is_lng) {
 		/* 32bit PAE */
-		ret = x86_gva_to_gpa_32bit_pae(mach, cr3, gva, gpa, has_pse,
-		    prot);
+		ret = x86_gva_to_gpa_32bit_pae(mach, cr3, gva, gpa, prot);
 	} else if (!is_pae && !is_lng) {
 		/* 32bit */
 		ret = x86_gva_to_gpa_32bit(mach, cr3, gva, gpa, has_pse, prot);
@@ -2236,14 +2233,14 @@ node_regmodrm(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 		strg->u.reg = reg;
 	}
 
+	/* The displacement applies to RM. */
+	strm->disp.type = get_disp_type(instr);
+
 	if (has_sib(instr)) {
 		/* Overwrites RM */
 		fsm_advance(fsm, 1, node_sib);
 		return 0;
 	}
-
-	/* The displacement applies to RM. */
-	strm->disp.type = get_disp_type(instr);
 
 	if (is_rip_relative(fsm, instr)) {
 		/* Overwrites RM */

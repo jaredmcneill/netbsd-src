@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.323 2019/02/14 08:18:25 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.327 2019/02/23 10:59:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.323 2019/02/14 08:18:25 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.327 2019/02/23 10:59:12 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -287,14 +287,6 @@ struct evcnt pmap_ldt_evcnt;
 /*
  * PAT
  */
-#define	PATENTRY(n, type)	(type << ((n) * 8))
-#define	PAT_UC		0x0ULL
-#define	PAT_WC		0x1ULL
-#define	PAT_WT		0x4ULL
-#define	PAT_WP		0x5ULL
-#define	PAT_WB		0x6ULL
-#define	PAT_UCMINUS	0x7ULL
-
 static bool cpu_pat_enabled __read_mostly = false;
 
 /*
@@ -3643,24 +3635,24 @@ pmap_sync_pv(struct pv_pte *pvpte, paddr_t pa, int clearbits, uint8_t *oattrs,
 	pt_entry_t expect;
 	bool need_shootdown;
 
-	expect = pmap_pa2pte(pa) | PG_V;
 	ptp = pvpte->pte_ptp;
 	va = pvpte->pte_va;
 	KASSERT(ptp == NULL || ptp->uobject != NULL);
 	KASSERT(ptp == NULL || ptp_va2o(va, 1) == ptp->offset);
 	pmap = ptp_to_pmap(ptp);
+	KASSERT(kpreempt_disabled());
 
 	if (__predict_false(pmap->pm_sync_pv != NULL)) {
 		return (*pmap->pm_sync_pv)(ptp, va, pa, clearbits, oattrs,
 		    optep);
 	}
 
+	expect = pmap_pa2pte(pa) | PG_V;
+
 	if (clearbits != ~0) {
 		KASSERT((clearbits & ~(PP_ATTRS_M|PP_ATTRS_U|PP_ATTRS_W)) == 0);
 		clearbits = pmap_pp_attrs_to_pte(clearbits);
 	}
-
-	KASSERT(kpreempt_disabled());
 
 	ptep = pmap_map_pte(pmap, ptp, va);
 	do {
@@ -4857,6 +4849,8 @@ x86_mmap_flags(paddr_t mdpgno)
 
 #define pmap_ept_valid_entry(pte)	(pte & EPT_R)
 
+bool pmap_ept_has_ad __read_mostly;
+
 static inline void
 pmap_ept_stats_update_bypte(struct pmap *pmap, pt_entry_t npte, pt_entry_t opte)
 {
@@ -4912,10 +4906,14 @@ static inline uint8_t
 pmap_ept_to_pp_attrs(pt_entry_t ept)
 {
 	uint8_t ret = 0;
-	if (ept & EPT_D)
-		ret |= PP_ATTRS_M;
-	if (ept & EPT_A)
-		ret |= PP_ATTRS_U;
+	if (pmap_ept_has_ad) {
+		if (ept & EPT_D)
+			ret |= PP_ATTRS_M;
+		if (ept & EPT_A)
+			ret |= PP_ATTRS_U;
+	} else {
+		ret |= (PP_ATTRS_M|PP_ATTRS_U);
+	}
 	if (ept & EPT_W)
 		ret |= PP_ATTRS_W;
 	return ret;
@@ -5098,6 +5096,7 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	struct pv_entry *new_pve;
 	struct pv_entry *new_sparepve;
 	bool wired = (flags & PMAP_WIRED) != 0;
+	bool accessed;
 	int error;
 
 	KASSERT(pmap_initialized);
@@ -5238,8 +5237,12 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 same_pa:
 	mutex_exit(pmap->pm_lock);
 
-	if ((~opte & (EPT_R | EPT_A)) == 0 &&
-	    ((opte ^ npte) & (PG_FRAME | EPT_W)) != 0) {
+	if (pmap_ept_has_ad) {
+		accessed = (~opte & (EPT_R | EPT_A)) == 0;
+	} else {
+		accessed = (opte & EPT_R) != 0;
+	}
+	if (accessed && ((opte ^ npte) & (PG_FRAME | EPT_W)) != 0) {
 		pmap_tlb_shootdown(pmap, va, 0, TLBSHOOT_ENTER);
 	}
 
@@ -5334,6 +5337,7 @@ pmap_ept_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	struct vm_page *pg;
 	struct pmap_page *pp;
 	pt_entry_t opte;
+	bool accessed;
 
 	KASSERT(pmap != pmap_kernel());
 	KASSERT(mutex_owned(pmap->pm_lock));
@@ -5362,7 +5366,14 @@ pmap_ept_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 		}
 	}
 
-	pmap_tlb_shootdown(pmap, va, 0, TLBSHOOT_REMOVE_PTE);
+	if (pmap_ept_has_ad) {
+		accessed = (opte & EPT_A) != 0;
+	} else {
+		accessed = true;
+	}
+	if (accessed) {
+		pmap_tlb_shootdown(pmap, va, 0, TLBSHOOT_REMOVE_PTE);
+	}
 
 	/*
 	 * If we are not on a pv_head list - we are done.
@@ -5487,12 +5498,7 @@ pmap_ept_sync_pv(struct vm_page *ptp, vaddr_t va, paddr_t pa, int clearbits,
 	bool need_shootdown;
 
 	expect = pmap_pa2pte(pa) | EPT_R;
-	KASSERT(ptp == NULL || ptp->uobject != NULL);
-	KASSERT(ptp == NULL || ptp_va2o(va, 1) == ptp->offset);
 	pmap = ptp_to_pmap(ptp);
-
-	KASSERT(clearbits == ~0 || (clearbits & ~(EPT_D | EPT_A | EPT_W)) == 0);
-	KASSERT(kpreempt_disabled());
 
 	if (clearbits != ~0) {
 		KASSERT((clearbits & ~(PP_ATTRS_M|PP_ATTRS_U|PP_ATTRS_W)) == 0);
@@ -5535,8 +5541,12 @@ pmap_ept_sync_pv(struct vm_page *ptp, vaddr_t va, paddr_t pa, int clearbits,
 		 * ... Unless we are clearing only the PG_RW bit and
 		 * it isn't cached as RW (PG_M).
 		 */
-		need_shootdown = (opte & EPT_A) != 0 &&
-		    !(clearbits == EPT_W && (opte & EPT_D) == 0);
+		if (pmap_ept_has_ad) {
+			need_shootdown = (opte & EPT_A) != 0 &&
+			    !(clearbits == EPT_W && (opte & EPT_D) == 0);
+		} else {
+			need_shootdown = true;
+		}
 
 		npte = opte & ~clearbits;
 
@@ -5557,7 +5567,8 @@ pmap_ept_sync_pv(struct vm_page *ptp, vaddr_t va, paddr_t pa, int clearbits,
 	pmap_unmap_pte();
 
 	*oattrs = pmap_ept_to_pp_attrs(opte);
-	*optep = opte;
+	if (optep != NULL)
+		*optep = opte;
 	return 0;
 }
 
@@ -5583,6 +5594,7 @@ pmap_ept_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t pr
 	pd_entry_t pde;
 	paddr_t ptppa;
 	vaddr_t va;
+	bool modified;
 
 	bit_rem = 0;
 	if (!(prot & VM_PROT_WRITE))
@@ -5613,7 +5625,12 @@ pmap_ept_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t pr
 			npte = (opte & ~bit_rem);
 		} while (pmap_pte_cas(spte, opte, npte) != opte);
 
-		if ((opte & EPT_D) != 0) {
+		if (pmap_ept_has_ad) {
+			modified = (opte & EPT_D) != 0;
+		} else {
+			modified = true;
+		}
+		if (modified) {
 			vaddr_t tva = x86_ptob(spte - ptes);
 			pmap_tlb_shootdown(pmap, tva, 0,
 			    TLBSHOOT_WRITE_PROTECT);

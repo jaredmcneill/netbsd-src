@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.229 2019/02/01 21:23:22 sevan Exp $
+$NetBSD: acronyms.comp,v 1.232 2019/02/21 01:20:45 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -289,6 +289,7 @@ CSR	control [and] status registers
 CSRG	Computer Systems Research Group
 CSS	cascading style sheets
 CSV	comma-separated values
+CTF	compact c type format
 CTM	close to metal
 CTR	counter [mode]
 CTS	clear to send
@@ -918,6 +919,7 @@ MVCC	multiversion concurrency control
 MWE	module width encoding
 MX	mail exchange
 NACK	negative acknowledgement
+NAK	negative acknowledgement
 NAN	not a number
 NAPT	Network Address Port Translation
 NAS	network attached storage
@@ -1092,6 +1094,7 @@ PME	power management event
 PMEG	page map entry group
 PMI	performance monitoring infrastructure
 PMI	platform management interrupt
+PMIC	power management integrated circut
 PMIO	port-mapped input/output
 PMT	photo-multiplier tube
 PMU	performance monitoring units
