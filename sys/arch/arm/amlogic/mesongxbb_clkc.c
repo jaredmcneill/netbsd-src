@@ -48,6 +48,8 @@ __KERNEL_RCSID(1, "$NetBSD$");
 #define	HHI_GCLK_OTHER		CBUS_REG(0x54)
 #define	HHI_SYS_CPU_CLK_CNTL1	CBUS_REG(0x57)
 #define	HHI_MPEG_CLK_CNTL	CBUS_REG(0x5d)
+#define	HHI_NAND_CLK_CNTL	CBUS_REG(0x97)
+#define	HHI_SD_EMMC_CLK_CNTL	CBUS_REG(0x99)
 #define	HHI_MPLL_CNTL		CBUS_REG(0xa0)
 #define	HHI_MPLL_CNTL2		CBUS_REG(0xa1)
 #define	HHI_MPLL_CNTL5		CBUS_REG(0xa4)
@@ -73,6 +75,7 @@ CFATTACH_DECL_NEW(mesongxbb_clkc, sizeof(struct meson_clk_softc),
 	mesongxbb_clkc_match, mesongxbb_clkc_attach, NULL, NULL);
 
 static const char *mpeg_sel_parents[] = { "xtal", NULL, "fclk_div7", "mpll1", "mpll2", "fclk_div4", "fclk_div3", "fclk_div5" };
+static const char *sd_emmc_clk0_sel_parents[] = { "xtal", "fclk_div2", "fclk_div3", "fclk_div5", "fclk_div7" };
 
 static struct meson_clk_clk mesongxbb_clkc_clks[] = {
 
@@ -153,6 +156,36 @@ static struct meson_clk_clk mesongxbb_clkc_clks[] = {
 	    __BITS(6,0),	/* div */
 	    0),
 
+	MESON_CLK_MUX(MESONGXBB_CLOCK_SD_EMMC_A_CLK0_SEL, "sd_emmc_a_clk0_sel", sd_emmc_clk0_sel_parents,
+	    HHI_SD_EMMC_CLK_CNTL,	/* reg */
+	    __BITS(11,9),		/* sel */
+	    0),
+	MESON_CLK_MUX(MESONGXBB_CLOCK_SD_EMMC_B_CLK0_SEL, "sd_emmc_b_clk0_sel", sd_emmc_clk0_sel_parents,
+	    HHI_SD_EMMC_CLK_CNTL,	/* reg */
+	    __BITS(27,25),		/* sel */
+	    0),
+	MESON_CLK_MUX(MESONGXBB_CLOCK_SD_EMMC_C_CLK0_SEL, "sd_emmc_c_clk0_sel", sd_emmc_clk0_sel_parents,
+	    HHI_NAND_CLK_CNTL,		/* reg */
+	    __BITS(11,9),		/* sel */
+	    0),
+
+	MESON_CLK_DIV(MESONGXBB_CLOCK_SD_EMMC_A_CLK0_DIV, "sd_emmc_a_clk0_div", "sd_emmc_a_clk0_sel",
+	    HHI_SD_EMMC_CLK_CNTL,	/* reg */
+	    __BITS(6,0),		/* div */
+	    0),
+	MESON_CLK_DIV(MESONGXBB_CLOCK_SD_EMMC_B_CLK0_DIV, "sd_emmc_b_clk0_div", "sd_emmc_b_clk0_sel",
+	    HHI_SD_EMMC_CLK_CNTL,	/* reg */
+	    __BITS(22,16),		/* div */
+	    0),
+	MESON_CLK_DIV(MESONGXBB_CLOCK_SD_EMMC_C_CLK0_DIV, "sd_emmc_c_clk0_div", "sd_emmc_c_clk0_sel",
+	    HHI_NAND_CLK_CNTL,		/* reg */
+	    __BITS(6,0),		/* div */
+	    0),
+
+	MESON_CLK_GATE(MESONGXBB_CLOCK_SD_EMMC_A_CLK0, "sd_emmc_a_clk0", "sd_emmc_a_clk0_div", HHI_SD_EMMC_CLK_CNTL, 7),
+	MESON_CLK_GATE(MESONGXBB_CLOCK_SD_EMMC_B_CLK0, "sd_emmc_b_clk0", "sd_emmc_b_clk0_div", HHI_SD_EMMC_CLK_CNTL, 23),
+	MESON_CLK_GATE(MESONGXBB_CLOCK_SD_EMMC_C_CLK0, "sd_emmc_c_clk0", "sd_emmc_c_clk0_div", HHI_NAND_CLK_CNTL, 7),
+
 	MESON_CLK_GATE(MESONGXBB_CLOCK_CLK81, "clk81", "mpeg_div", HHI_MPEG_CLK_CNTL, 7),
 
 	MESON_CLK_GATE(MESONGXBB_CLOCK_I2C, "i2c", "clk81", HHI_GCLK_MPEG0, 9),
@@ -161,6 +194,9 @@ static struct meson_clk_clk mesongxbb_clkc_clks[] = {
 	MESON_CLK_GATE(MESONGXBB_CLOCK_UART0, "uart0", "clk81", HHI_GCLK_MPEG0, 13),
 	MESON_CLK_GATE(MESONGXBB_CLOCK_SDHC, "sdhc", "clk81", HHI_GCLK_MPEG0, 14),
 	MESON_CLK_GATE(MESONGXBB_CLOCK_SDIO, "sdio", "clk81", HHI_GCLK_MPEG0, 17),
+	MESON_CLK_GATE(MESONGXBB_CLOCK_SD_EMMC_A, "sd_emmc_a", "clk81", HHI_GCLK_MPEG0, 24),
+	MESON_CLK_GATE(MESONGXBB_CLOCK_SD_EMMC_B, "sd_emmc_b", "clk81", HHI_GCLK_MPEG0, 25),
+	MESON_CLK_GATE(MESONGXBB_CLOCK_SD_EMMC_C, "sd_emmc_c", "clk81", HHI_GCLK_MPEG0, 26),
 
 	MESON_CLK_GATE(MESONGXBB_CLOCK_ETH, "eth", "clk81", HHI_GCLK_MPEG1, 3),
 	MESON_CLK_GATE(MESONGXBB_CLOCK_UART1, "uart1", "clk81", HHI_GCLK_MPEG1, 16),
