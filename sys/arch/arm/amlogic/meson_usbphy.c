@@ -116,9 +116,22 @@ static int
 meson_usbphy_enable(device_t dev, void *priv, bool enable)
 {
 	struct meson_usbphy_softc * const sc = device_private(dev);
+	struct fdtbus_regulator *reg;
 	uint32_t val;
+	int error;
 
 	if (enable) {
+		if (of_hasprop(sc->sc_phandle, "phy-supply")) {
+			reg = fdtbus_regulator_acquire(sc->sc_phandle, "phy-supply");
+			if (reg != NULL) {
+				error = fdtbus_regulator_enable(reg);
+				if (error != 0)
+					device_printf(dev, "WARNING: couldn't enable phy-supply: %d\n", error);
+			} else {
+				device_printf(dev, "WARNING: couldn't acquire phy-supply\n");
+			}
+		}
+
 		delay(1000);
 
 		val = PHY_READ(sc, PREI_USB_PHY_CFG_REG);
