@@ -775,13 +775,6 @@ mips3_vector_init(const struct splsw *splsw)
 
 	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips3_tlb_miss,
 	      mips3_exception_end - mips3_tlb_miss);
-#if defined(MIPS3_5900)
-	size_t esz = mips3_exception_end - mips3_exception;
-	memcpy((void *)MIPS_R5900_COUNTER_EXC_VEC, mips3_exception, esz);
-	memcpy((void *)MIPS_R5900_DEBUG_EXC_VEC, mips3_exception, esz);
-	memcpy((void *)MIPS3_GEN_EXC_VEC, mips3_exception, esz);
-	memcpy((void *)MIPS3_INTR_EXC_VEC, mips3_exception, esz);
-#endif
 
 	/*
 	 * Copy locore-function vector.
