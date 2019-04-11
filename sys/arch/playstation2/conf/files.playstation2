@@ -23,7 +23,10 @@ file arch/playstation2/playstation2/clock.c
 file arch/playstation2/playstation2/disksubr.c		disk
 file arch/playstation2/playstation2/machdep.c
 file arch/playstation2/playstation2/sifbios.c
+file arch/mips/mips/cache_r5900.c
 file arch/mips/mips/mips3_clock.c
+file arch/mips/mips/mips3_clockintr.c
+file arch/mips/mips/mips5900_subr.S
 
 file dev/bus_dma/bus_dmamem_common.c
 

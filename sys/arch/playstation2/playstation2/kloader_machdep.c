@@ -66,7 +66,7 @@ kloader_playstation2_jump(kloader_bootfunc_t func, vaddr_t sp,
 }
 
 void
-kloader_playstation2_reset()
+kloader_playstation2_reset(void)
 {
 
 	((void (*)(void))0xbfc00000)();

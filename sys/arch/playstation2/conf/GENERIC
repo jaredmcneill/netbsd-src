@@ -53,3 +53,7 @@ config		netbsd		root on ? type ?
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
+
+no ohci*
+no wdc*
+no smap*

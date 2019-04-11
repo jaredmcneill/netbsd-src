@@ -47,7 +47,6 @@
 #define _reg_write_2(a, v)	__write_2(a, v)
 #define _reg_write_4(a, v)	__write_4(a, v)
 #define _reg_write_8(a, v)	__write_8(a, v)
-#define _reg_write_16(a, v)	__write_16(a, v)
 
 #define qwctobyte(x)		((x) << 4)
 #define bytetoqwc(x)		((x) >> 4)

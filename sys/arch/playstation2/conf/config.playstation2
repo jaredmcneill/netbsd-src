@@ -28,9 +28,8 @@ options 	INET6		# IPV6
 options 	NFS_BOOT_DHCP
 
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
-options 	FONT_SONY8x16
-options 	WS_KERNEL_FG=WSCOL_BROWN
-options 	WS_KERNEL_BG=WSCOL_BLUE
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
 
 mainbus0	at root
 

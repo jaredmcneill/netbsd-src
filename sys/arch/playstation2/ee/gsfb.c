@@ -168,7 +168,6 @@ STATIC u_int32_t gsfb_load_cmd_8x16_psmct32[(6 + 32) * 4]
 };
 
 #ifdef GSFB_DEBUG_MONITOR
-#include <machine/stdarg.h>
 STATIC const struct _gsfb_debug_window {
 	int start, nrow, attr;
 } _gsfb_debug_window[3] = {
@@ -637,7 +636,7 @@ __gsfb_print(int window, const char *fmt, ...)
 	u_int c;
 	va_list ap;
 	
-	if (!gsfb.initialized)
+	if (!gsfb_is_console)
 		return;
 	
 	s = _intr_suspend();

@@ -39,7 +39,11 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.7 2014/03/31 11:25:49 martin Exp $");
 
 #include <dev/usb/ukbdvar.h>
 
+#if NUKBD > 0
 #define gsfbcngetc	wskbd_cngetc
+#else
+static int gsfbcngetc(dev_t dev) { return -1; }
+#endif
 #define gsfbcnputc	wsdisplay_cnputc
 #define	gsfbcnpollc	nullcnpollc
 cons_decl(gsfb);

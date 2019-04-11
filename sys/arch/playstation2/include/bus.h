@@ -286,11 +286,6 @@ struct playstation2_bus_space {
 	_wbflush();							\
 }
 #endif
-#ifndef __write_16
-#define __write_16(a, v)	(*(volatile u_int128_t *)(a) = (v)) {	\
-	_wbflush();							\
-}
-#endif
 #else /* EE_GCC */
 #ifdef __write_8
 #error "can't override __write_8"

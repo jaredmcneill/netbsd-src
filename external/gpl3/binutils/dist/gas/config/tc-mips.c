@@ -518,7 +518,7 @@ static int mips_32bitmode = 0;
 
 /* True, if CPU has support for ldc1 and sdc1. */
 #define CPU_HAS_LDC1_SDC1(CPU)	\
-   ((mips_opts.isa != ISA_MIPS1) && ((CPU) != CPU_R5900))
+   ((mips_opts.isa != ISA_MIPS1))
 
 /* True if mflo and mfhi can be immediately followed by instructions
    which write to the HI and LO registers.

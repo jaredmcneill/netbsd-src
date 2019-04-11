@@ -105,7 +105,7 @@ interrupt_init(void)
 	evcnt_attach_static(&_playstation2_evcnt.dmac);
 
 	/* install software interrupt handler */
-	intc_intr_establish(I_CH10_TIMER1, IPL_SOFT, timer1_intr, 0);
+	intc_intr_establish(I_CH10_TIMER1, IPL_SOFTCLOCK, timer1_intr, 0);
 	intc_intr_establish(I_CH11_TIMER2, IPL_SOFTCLOCK, timer2_intr, 0);
 
 	/* IPL_SOFTNET and IPL_SOFTSERIAL are shared interrupt. */
@@ -150,6 +150,8 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 		(void)splhigh();
 	}
 }
+
+#if 0
 void
 setsoft(int ipl)
 {
@@ -165,6 +167,7 @@ setsoft(int ipl)
 	/* kick one shot timer */
 	timer_one_shot(timer_map[ipl]);
 }
+#endif
 
 /*
  * SPL support
@@ -185,6 +188,7 @@ md_ipl_register(enum ipl_type type, struct _ipl_holder *holder)
 	}
 }
 
+#if 0
 int
 splraise(int npl)
 {
@@ -199,7 +203,7 @@ splraise(int npl)
 	return (opl);
 }
 
-void
+static void
 splset(int npl)
 {
 	int s;
@@ -217,6 +221,7 @@ spl0(void)
 	splset(0);
 	_spllower(0);
 }
+#endif
 
 /*
  * SIF BIOS call of interrupt utility.
@@ -270,7 +275,7 @@ _debug_print_intr(const char *ident)
 {
 
 	__gsfb_print(0,
-	    "CLOCK %-5lld SBUS %-5lld DMAC %-5lld "
+	    "CLOCK %-5lld SBUS %-5lld DMAC %-5lld ",
 
 	    _playstation2_evcnt.clock.ev_count,
 	    _playstation2_evcnt.sbus.ev_count,

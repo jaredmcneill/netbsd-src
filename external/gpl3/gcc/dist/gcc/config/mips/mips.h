@@ -1015,7 +1015,6 @@ struct mips_cpu_info {
 
 /* ISA has LDC1 and SDC1.  */
 #define ISA_HAS_LDC1_SDC1	(!ISA_MIPS1				\
-				 && !TARGET_MIPS5900			\
 				 && !TARGET_MIPS16)
 
 /* ISA has the mips4 FP condition code instructions: FP-compare to CC,
@@ -1164,7 +1163,6 @@ struct mips_cpu_info {
 /* ISA has data prefetch instructions.  This controls use of 'pref'.  */
 #define ISA_HAS_PREFETCH	((ISA_MIPS4				\
 				  || TARGET_LOONGSON_2EF		\
-				  || TARGET_MIPS5900			\
 				  || mips_isa_rev >= 1)			\
 				 && !TARGET_MIPS16)
 

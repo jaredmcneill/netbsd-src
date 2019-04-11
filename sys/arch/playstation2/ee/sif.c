@@ -74,16 +74,28 @@ sif_init(void)
 	printf("PlayStation 2 SIF BIOS version %d.%d\n",
 	    MAJOR(vers), MINOR(vers));
 
+	spl0();
+
 	/* Initialize SIF */
+printf("sifdma_init() ...");
 	if (sifdma_init() < 0)
 		panic("SIFDMA");
+printf(" ok\n");
+printf("dmac_intr_establish() ...");
+	dmac_intr_establish(D_CH5_SIF0, IPL_TTY, sifcmd_intr, 0);
+printf(" ok\n");
+printf("sifcmd_init() ...");
 	if (sifcmd_init() < 0)
 		panic("SIFCMD");
-	dmac_intr_establish(D_CH5_SIF0, IPL_TTY, sifcmd_intr, 0);
+printf(" ok\n");
+printf("sifrpc_init() ...");
 	if (sifrpc_init() < 0)
 		panic("SIFRPC");
+printf(" ok\n");
+printf("iopmem_init() ...");
 	if (iopmem_init() < 0)
 		panic("IOP Memory");
+printf(" ok\n");
 }
 
 void
@@ -120,7 +132,7 @@ iopdma_allocate_buffer(struct iopdma_segment *seg, size_t size)
 #ifdef SIF_DEBUG
 	__spd_total_alloc += size;
 #endif
-	DPRINTF("0x%08lx+%#x (total=%#x)\n", seg->iop_paddr, size,
+	DPRINTF("0x%08x+%#x (total=%#x)\n", seg->iop_paddr, size,
 	    __spd_total_alloc);
 
 	KDASSERT((seg->ee_vaddr & 63) == 0);
@@ -137,6 +149,6 @@ iopdma_free_buffer(struct iopdma_segment *seg)
 #ifdef SIF_DEBUG
 	__spd_total_alloc -= seg->size;
 #endif
-	DPRINTF("0x%08lx (total=%#x, result=%d)\n", seg->iop_paddr,
+	DPRINTF("0x%08x (total=%#x, result=%d)\n", seg->iop_paddr,
 	    __spd_total_alloc, ret);
 }

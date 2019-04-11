@@ -65,7 +65,7 @@ cpu_initclocks(void)
 
 	todr_attach(&todr);
 
-	mips3_init_tc();
+	mips3_initclocks();
 }
 
 void
@@ -93,7 +93,7 @@ get_bootinfo_tod(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 	utc = clock_ymdhms_to_secs(dt) - 9*60*60;
 	clock_secs_to_ymdhms(utc, dt);
 #ifdef DEBUG
-        printf("bootinfo: %d/%d/%d/%d/%d/%d rtc_offset %d\n", dt->dt_year,
+        printf("bootinfo: %d/%d/%d/%d/%d/%d rtc_offset %d\n", (int)dt->dt_year,
 	    dt->dt_mon, dt->dt_day, dt->dt_hour, dt->dt_min, dt->dt_sec,
 	    rtc_offset);
 #endif

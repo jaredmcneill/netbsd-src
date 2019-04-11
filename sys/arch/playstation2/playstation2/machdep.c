@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2017/11/06 03:47:47 christos Exp $"
 #include <dev/cons.h>	/* cntab access (cpu_reboot) */
 #include <machine/bootinfo.h>
 #include <machine/psl.h>
+#include <machine/locore.h>
 #include <machine/intr.h>/* hardintr_init */
 #include <playstation2/playstation2/sifbios.h>
 #include <playstation2/playstation2/interrupt.h>
@@ -65,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2017/11/06 03:47:47 christos Exp $"
 #ifdef KLOADER
 #include <machine/kloader.h>
 #endif
-
-struct cpu_info cpu_info_store;
 
 struct vm_map *mb_map;
 struct vm_map *phys_map;
@@ -86,8 +85,6 @@ mach_init(void)
 {
 	extern char kernel_text[], edata[], end[];
 	void *kernend;
-	struct pcb *pcb0;
-	vaddr_t v;
 	paddr_t start;
 	size_t size;
 
@@ -95,7 +92,7 @@ mach_init(void)
 	 * Clear the BSS segment.
 	 */
 	kernend = (void *)mips_round_page(end);
-	memset(edata, 0, kernend - edata);
+	memset(edata, 0, (uintptr_t)kernend - (uintptr_t)edata);
 
 	/* disable all interrupt */
 	interrupt_init_bootstrap();
@@ -110,6 +107,8 @@ mach_init(void)
 #ifdef DEBUG
 	bootinfo_dump();
 #endif
+	cpu_setmodel("SONY PlayStation 2");
+
 	uvm_md_init();
 
 	physmem = atop(PS2_MEMORY_SIZE);
@@ -119,7 +118,7 @@ mach_init(void)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL, false);
 
 	/*
 	 * Load the rest of the available pages into the VM system.
@@ -127,19 +126,24 @@ mach_init(void)
 	start = (paddr_t)round_page(MIPS_KSEG0_TO_PHYS(kernend));
 	size = PS2_MEMORY_SIZE - start - BOOTINFO_BLOCK_SIZE;
 	memset((void *)MIPS_PHYS_TO_KSEG1(start), 0, size);
-	    
+
 	/* kernel itself */
 	mem_clusters[0].start = trunc_page(MIPS_KSEG0_TO_PHYS(kernel_text));
 	mem_clusters[0].size = start - mem_clusters[0].start;
 	/* heap */
 	mem_clusters[1].start = start;
 	mem_clusters[1].size = size;
+	mem_cluster_cnt = 2;
+
 	/* load */
-	printf("load memory %#lx, %#x\n", start, size);
+	printf("load memory %#llx, %#llx\n", mem_clusters[0].start, mem_clusters[0].size);
+#if 0
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t)kernend,
+	    mem_clusters, mem_cluster_cnt, NULL, 0);
+#else
 	uvm_page_physload(atop(start), atop(start + size),
 	    atop(start), atop(start + size), VM_FREELIST_DEFAULT);
-
-	strcpy(cpu_model, "SONY PlayStation 2");
+#endif
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -151,15 +155,7 @@ mach_init(void)
 	/*
 	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = uvm_pageboot_alloc(USPACE);
-
-	pcb0 = lwp_getpcb(&lwp0);
-	pcb0->pcb_context[11] = PSL_LOWIPL;	/* SR */
-#ifdef IPL_ICU_MASK
-	pcb0->pcb_ppl = 0;
-#endif
-
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1
+	mips_init_lwp0_uarea();
 }
 
 /*
@@ -169,6 +165,8 @@ void
 cpu_startup(void)
 {
 	cpu_startup_common();
+
+	splsched();
 }
 
 void

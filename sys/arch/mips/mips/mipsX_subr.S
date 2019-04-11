@@ -175,10 +175,10 @@
 /*
  * Use 64bit cp0 instructions?
  */
-#if (MIPS3 + MIPS64 + MIPS64R2) > 0
+#if (MIPS3 + MIPS64 + MIPS64R2) > 0 && !defined(MIPS3_5900)
 #define	USE_64BIT_INSTRUCTIONS
 #define	USE_64BIT_CP0_FUNCTIONS
-#elif (MIPS32 + MIPS32R2) > 0
+#elif (MIPS32 + MIPS32R2) > 0 || defined(MIPS3_5900)
 #ifdef _LP64
 #error	MIPS32 and MIPS32R2 can't run 64-bit kernels.
 #endif
@@ -488,7 +488,9 @@ MIPSX(tlb_miss_common):
 #endif
 #endif /* PGSHIFT & 1 */
 	_MTC0	k0, MIPS_COP_0_TLB_LO0		#15: lo0 is loaded
+	COP0_SYNC
 	_MTC0	k1, MIPS_COP_0_TLB_LO1		#16: lo1 is loaded
+	COP0_SYNC
 	sll	$0, $0, 3			#17: standard nop (ehb)
 #ifdef MIPS3
 	nop					#18: extra nop for QED5230

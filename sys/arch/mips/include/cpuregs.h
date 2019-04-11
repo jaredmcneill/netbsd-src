@@ -163,7 +163,11 @@
 # define COP0_SYNC		sll $0,$0,1; sll $0,$0,1; sll $0,$0,1
 # define JR_HB_RA		sll $0,$0,1; sll $0,$0,1; jr ra; sll $0,$0,1
 #elif MIPS3 > 0
-# define COP0_SYNC		nop; nop; nop
+# if defined(MIPS3_5900)
+#  define COP0_SYNC		sync.p
+# else
+#  define COP0_SYNC		nop; nop; nop
+# endif
 # define JR_HB_RA		nop; nop; jr ra; nop
 #else
 # define COP0_SYNC		nop
@@ -475,6 +479,12 @@
 #define	MIPS3_XTLB_MISS_EXC_VEC MIPS_PHYS_TO_KSEG0(0x0080)
 #define	MIPS3_CACHE_ERR_EXC_VEC MIPS_PHYS_TO_KSEG0(0x0100)
 #define	MIPS3_GEN_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0180)
+
+/*
+ * TX79 (R5900) exception vectors
+ */
+#define MIPS_R5900_COUNTER_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0080)
+#define MIPS_R5900_DEBUG_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0100)
 
 /*
  * MIPS32/MIPS64 (and some MIPS3) dedicated interrupt vector.

@@ -745,20 +745,27 @@ mips3_vector_init(const struct splsw *splsw)
 
 	/* TLB miss handler address and end */
 	extern char mips3_tlb_miss[];
+#if !defined(MIPS3_5900)
 	extern char mips3_xtlb_miss[];
+#endif
 
 	/* Cache error handler */
 	extern char mips3_cache[];
 	/*
 	 * Copy down exception vector code.
 	 */
-
+#if !defined(MIPS3_5900)
 	if (mips3_xtlb_miss - mips3_tlb_miss != 0x80)
 		panic("startup: %s vector code not 128 bytes in length",
 		    "UTLB");
 	if (mips3_cache - mips3_xtlb_miss != 0x80)
 		panic("startup: %s vector code not 128 bytes in length",
 		    "XTLB");
+#else
+	if (mips3_cache - mips3_tlb_miss != 0x100)
+		panic("startup: %s vector code not 256 bytes in length",
+		    "UTLB");
+#endif
 	if (mips3_exception - mips3_cache != 0x80)
 		panic("startup: %s vector code not 128 bytes in length",
 		    "Cache error");
@@ -768,6 +775,13 @@ mips3_vector_init(const struct splsw *splsw)
 
 	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips3_tlb_miss,
 	      mips3_exception_end - mips3_tlb_miss);
+#if defined(MIPS3_5900)
+	size_t esz = mips3_exception_end - mips3_exception;
+	memcpy((void *)MIPS_R5900_COUNTER_EXC_VEC, mips3_exception, esz);
+	memcpy((void *)MIPS_R5900_DEBUG_EXC_VEC, mips3_exception, esz);
+	memcpy((void *)MIPS3_GEN_EXC_VEC, mips3_exception, esz);
+	memcpy((void *)MIPS3_INTR_EXC_VEC, mips3_exception, esz);
+#endif
 
 	/*
 	 * Copy locore-function vector.
@@ -1407,6 +1421,7 @@ mips3_tlb_probe(void)
 {
 	struct mips_options * const opts = &mips_options;
 	opts->mips3_tlb_pg_mask = mips3_cp0_tlb_page_mask_probe();
+#if !defined(__mips_o32)
 	if (CPUIS64BITS) {
 		opts->mips3_tlb_vpn_mask = mips3_cp0_tlb_entry_hi_probe();
 		opts->mips3_tlb_vpn_mask |= PAGE_MASK;
@@ -1424,6 +1439,7 @@ mips3_tlb_probe(void)
 			mips_vm_maxuser_address = opts->mips3_tlb_vpn_mask + 1;
 #endif
 	}
+#endif
 }
 #endif
 
