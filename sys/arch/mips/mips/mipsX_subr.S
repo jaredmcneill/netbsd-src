@@ -3032,7 +3032,7 @@ MIPSX(excpt_sw):
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 11 coprocessor unusable
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 12 arithmetic overflow
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 13 r4k trap exception
-#if defined(MIPS3)
+#if defined(MIPS3) && !defined(MIPS3_5900)
 	PTR_WORD _C_LABEL(MIPSX(VCEI))			# 14 r4k virt coherence
 #else
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 14 reserved
@@ -3053,7 +3053,7 @@ MIPSX(excpt_sw):
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 28 reserved
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 29 reserved
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 30 reserved
-#if defined(MIPS3)
+#if defined(MIPS3) && !defined(MIPS3_5900)
 	PTR_WORD _C_LABEL(MIPSX(VCED))			# 31 v. coherence exception data
 #else
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 31 reserved
@@ -3075,7 +3075,7 @@ MIPSX(excpt_sw):
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 11
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 12
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 13
-#if defined(MIPS3)
+#if defined(MIPS3) && !defined(MIPS3_5900)
 	PTR_WORD _C_LABEL(MIPSX(VCEI))			# 14
 #else
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 14
@@ -3096,7 +3096,7 @@ MIPSX(excpt_sw):
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 28
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 29
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 30
-#if defined(MIPS3)
+#if defined(MIPS3) && !defined(MIPS3_5900)
 	PTR_WORD _C_LABEL(MIPSX(VCED))			# 31 v. coherence exception data
 #else
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 31
