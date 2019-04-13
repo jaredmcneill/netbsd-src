@@ -137,13 +137,8 @@ mach_init(void)
 
 	/* load */
 	printf("load memory %#llx, %#llx\n", mem_clusters[0].start, mem_clusters[0].size);
-#if 0
 	mips_page_physload(MIPS_KSEG0_START, (vaddr_t)kernend,
 	    mem_clusters, mem_cluster_cnt, NULL, 0);
-#else
-	uvm_page_physload(atop(start), atop(start + size),
-	    atop(start), atop(start + size), VM_FREELIST_DEFAULT);
-#endif
 
 	/*
 	 * Initialize error message buffer (at end of core).
