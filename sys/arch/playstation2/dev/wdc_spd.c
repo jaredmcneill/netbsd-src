@@ -201,9 +201,9 @@ wdc_spd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_chanlist[0] = &sc->sc_channel;
 	wdc->sc_atac.atac_channels = sc->sc_chanlist;
 	wdc->sc_atac.atac_nchannels = 1;
+	wdc->wdc_maxdrives = 2;
 	ch->ch_channel = 0;
 	ch->ch_atac = &sc->sc_wdcdev.sc_atac;
-	ch->ch_ndrives = 2;
 
 	__wdc_spd_bus_space(CHAN_TO_WDC_REGS(ch));
 
