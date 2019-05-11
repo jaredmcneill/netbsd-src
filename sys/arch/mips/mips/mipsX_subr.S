@@ -1133,6 +1133,12 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	 nop
 #endif /* PARANOIA */
 
+#ifdef MIPS3_5900
+	jal	_C_LABEL(_intr_suspend)
+	 nop
+	move	t7, v0
+#endif
+
 	/*
 	 * We first need to get to IPL_HIGH so that interrupts are masked.
 	 */
@@ -1262,6 +1268,12 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	 */
 	jal	_C_LABEL(splx_noprof)		# splx(ppl)
 	 nop
+
+#ifdef MIPS3_5900
+	move	a0, t7
+	jal	_C_LABEL(_intr_resume)
+	 nop
+#endif
 
 #ifdef PARANOIA
 	mfc0	v0, MIPS_COP_0_STATUS
