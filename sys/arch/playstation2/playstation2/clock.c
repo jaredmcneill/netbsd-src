@@ -65,7 +65,7 @@ cpu_initclocks(void)
 
 	todr_attach(&todr);
 
-	mips3_initclocks();
+	//mips3_initclocks();
 }
 
 void

@@ -118,7 +118,8 @@ mach_init(void)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init(NULL, false);
+	extern struct splsw ee_splsw;
+	mips_vector_init(&ee_splsw, false);
 
 	/*
 	 * Load the rest of the available pages into the VM system.

@@ -104,13 +104,6 @@ interrupt_init(void)
 	evcnt_attach_static(&_playstation2_evcnt.sbus);
 	evcnt_attach_static(&_playstation2_evcnt.dmac);
 
-	/* install software interrupt handler */
-	intc_intr_establish(I_CH10_TIMER1, IPL_SOFTCLOCK, timer1_intr, 0);
-	intc_intr_establish(I_CH11_TIMER2, IPL_SOFTCLOCK, timer2_intr, 0);
-
-	/* IPL_SOFTNET and IPL_SOFTSERIAL are shared interrupt. */
-	intc_intr_establish(I_CH12_TIMER3, IPL_SOFTNET, timer3_intr, 0);
-
 	/* enable SIF BIOS access */
 	md_imask = ~D_STAT_CIM_BIT(D_CH5_SIF0);
 	mips_cp0_status_write(0x00010801);
@@ -151,24 +144,6 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 	}
 }
 
-#if 0
-void
-setsoft(int ipl)
-{
-	const static int timer_map[] = {
-		[IPL_SOFTCLOCK]	= 1,
-		[IPL_SOFTBIO]	= 2,
-		[IPL_SOFTNET]	= 3,
-		[IPL_SOFTSERIAL]= 3,
-	};
-
-	KDASSERT(ipl >= IPL_SOFTCLOCK && ipl <= IPL_SOFTSERIAL);
-
-	/* kick one shot timer */
-	timer_one_shot(timer_map[ipl]);
-}
-#endif
-
 /*
  * SPL support
  */
@@ -187,41 +162,6 @@ md_ipl_register(enum ipl_type type, struct _ipl_holder *holder)
 		__icu_mask[i] = new;
 	}
 }
-
-#if 0
-int
-splraise(int npl)
-{
-	int s, opl;
-
-	s = _intr_suspend();
-	opl = md_imask;
-	md_imask = opl | npl;
-	md_imask_update();
-	_intr_resume(s);
-
-	return (opl);
-}
-
-static void
-splset(int npl)
-{
-	int s;
-
-	s = _intr_suspend();
-	md_imask = npl;
-	md_imask_update();
-	_intr_resume(s);
-}
-
-void
-spl0(void)
-{
-
-	splset(0);
-	_spllower(0);
-}
-#endif
 
 /*
  * SIF BIOS call of interrupt utility.
