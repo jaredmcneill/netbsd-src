@@ -773,8 +773,14 @@ mips3_vector_init(const struct splsw *splsw)
 		panic("startup: %s vector code too large",
 		    "General exception");
 
+#if !defined(MIPS_5900)
 	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips3_tlb_miss,
 	      mips3_exception_end - mips3_tlb_miss);
+#else
+	extern char mips3_intr_end[];
+	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips3_tlb_miss,
+	      mips3_intr_end - mips3_elb_miss);
+#endif
 
 	/*
 	 * Copy locore-function vector.
