@@ -42,6 +42,7 @@ static const void *fdt_data;
 
 static struct fdt_conslist fdt_console_list =
     TAILQ_HEAD_INITIALIZER(fdt_console_list);
+FDT_CONSOLE(dummy_console, NULL);
 
 bool
 fdtbus_init(const void *data)
@@ -346,6 +347,8 @@ fdtbus_get_console(void)
 		int best_match = 0;
 
 		__link_set_foreach(info, fdt_consoles) {
+			if (info == NULL)
+				continue;
 			const int match = (*info)->ops->match(phandle);
 			if (match > best_match) {
 				best_match = match;
