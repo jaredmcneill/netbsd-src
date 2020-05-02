@@ -22,16 +22,22 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.srec@}
 .endif
 
+.if defined(STATIC_DTB)
+MD_OBJS+=	static_dtb.o
+
+static_dtb.o:	${.OBJDIR}/${DTB}
+	-rm -f ${.OBJDIR}/builtin.dtb
+	-ln -s ${.OBJDIR}/${DTB} ${.OBJDIR}/builtin.dtb
+	${OBJCOPY} -I binary -O ${DTBBFDTARGET} -B ${DTBBFDARCH} builtin.dtb \
+		--rename-section .data=.rodata ${.TARGET}
+.endif
+
 .if defined(NEED_BINARY) && ${NEED_BINARY} != "no"
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
 	${OBJCOPY} -S -O binary $@ $@.bin
 
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
-
-.if defined(BOARDMKFRAG)	# Must be a full pathname
-.include "${BOARDMKFRAG}"
-.endif
 
 .if defined(NEED_UBOOTIMAGE) && ${NEED_UBOOTIMAGE} != "no"
 _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh

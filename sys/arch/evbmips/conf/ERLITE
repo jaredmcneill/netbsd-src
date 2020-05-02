@@ -13,6 +13,7 @@ makeoptions	DTSARCH="mips"
 makeoptions	DTSGNUARCH="mips"
 makeoptions	DTSSUBDIR="cavium-octeon"
 makeoptions	DTS="ubnt_e100.dts"
+makeoptions 	STATIC_DTB=1
 
 # XXX UVM freelists vs 4GB issue.  Enable this if you see hangs
 # waiting for memory when there are actual free pages around.

@@ -83,7 +83,7 @@ OPT_MODULAR=	%MODULAR%
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-MD_OBJS=	locore.o locore_machdep.o
+MD_OBJS+=	locore.o locore_machdep.o
 MD_CFILES=
 MD_SFILES=	${MIPS}/mips/locore.S ${THISMIPS}/${MACHINE}/locore_machdep.S	
 

@@ -24,5 +24,7 @@ makeoptions	BOARDTYPE="octeon"
 
 options 	FDT
 makeoptions	BOARDMKFRAG="${THISMIPS}/conf/mk.fdt"
+makeoptions	DTBBFDTARGET="elf64-tradbigmips"
+makeoptions	DTBBFDARCH="mips:octeon+"
 
 include 	"arch/mips/conf/files.octeon"
