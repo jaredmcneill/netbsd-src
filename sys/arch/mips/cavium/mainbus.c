@@ -29,19 +29,38 @@
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2015/04/29 08:32:00 hikaru Exp $");
 
+#define _MIPS_BUS_DMA_PRIVATE
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <mips/cavium/include/mainbusvar.h>
+
+#include <dev/fdt/fdtvar.h>
 
 static int	mainbus_match(device_t, struct cfdata *, void *);
 static void	mainbus_attach(device_t, device_t, void *);
 static int	mainbus_submatch(device_t, cfdata_t, const int *, void *);
 static int	mainbus_print(void *, const char *);
 
+static void	simplebus_bus_io_init(bus_space_tag_t, void *);
+
 CFATTACH_DECL_NEW(mainbus, sizeof(device_t), mainbus_match, mainbus_attach,
     NULL, NULL);
+
+static struct mips_bus_space simplebus_bus_tag;
+
+static struct mips_bus_dma_tag simplebus_dma_tag = {
+	._cookie = NULL,
+	._wbase = 0,
+	._bounce_alloc_lo = 0,
+	._bounce_alloc_hi = 0,
+	._dmamap_ops = _BUS_DMAMAP_OPS_INITIALIZER,
+	._dmamem_ops = _BUS_DMAMEM_OPS_INITIALIZER,
+	._dmatag_ops = _BUS_DMATAG_OPS_INITIALIZER,
+};
 
 static int
 mainbus_match(device_t parent, struct cfdata *match, void *aux)
@@ -60,6 +79,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	int i;
 	struct mainbus_attach_args aa;
+	struct fdt_attach_args faa;
 
 	aprint_normal("\n");
 
@@ -68,6 +88,15 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		(void)config_found_sm_loc(self, "mainbus", NULL, &aa,
 		    mainbus_print, mainbus_submatch);
 	}
+
+	simplebus_bus_io_init(&simplebus_bus_tag, NULL);
+
+	faa.faa_bst = &simplebus_bus_tag;
+	faa.faa_a4x_bst = NULL;		/* XXX */
+	faa.faa_dmat = &simplebus_dma_tag;
+	faa.faa_name = "";
+	faa.faa_phandle = OF_peer(0);
+	config_found(self, &faa, NULL);
 }
 
 static int
@@ -94,3 +123,15 @@ mainbus_print(void *aux, const char *pnp)
 
 	return UNCONF;
 }
+
+/* ---- bus_space(9) */
+#define	CHIP			simplebus
+#define	CHIP_IO
+#define	CHIP_ACCESS_SIZE	8
+
+#define	CHIP_W1_BUS_START(v)	0x0000000000000000ULL
+#define	CHIP_W1_BUS_END(v)	0xffffffffffffffffULL
+#define	CHIP_W1_SYS_START(v)	0x0000000000000000ULL
+#define	CHIP_W1_SYS_END(v)	0xffffffffffffffffULL
+
+#include <mips/mips/bus_space_alignstride_chipdep.c>

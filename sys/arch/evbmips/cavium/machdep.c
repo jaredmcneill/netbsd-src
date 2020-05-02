@@ -154,6 +154,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2016/12/28 03:27:08 mrg Exp $");
 
 #include <evbmips/cavium/octeon_uboot.h>
 
+#include <dev/fdt/fdtvar.h>
+
 static void	mach_init_bss(void);
 static void	mach_init_vector(void);
 static void	mach_init_bus_space(void);
@@ -180,6 +182,8 @@ void	mach_init(uint64_t, uint64_t, uint64_t, uint64_t);
 struct octeon_config octeon_configuration;
 struct octeon_btinfo octeon_btinfo;
 
+extern const char _binary_builtin_dtb_start[];
+
 char octeon_nmi_stack[PAGE_SIZE] __section(".data1") __aligned(PAGE_SIZE);
 
 /*
@@ -202,6 +206,9 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 	memcpy(&octeon_btinfo,
 	    (struct octeon_btinfo *)MIPS_PHYS_TO_KSEG0(btinfo_paddr),
 	    sizeof(octeon_btinfo));
+
+	/* Load FDT */
+	fdtbus_init(_binary_builtin_dtb_start);
 
 	corefreq = octeon_btinfo.obt_eclock_hz;
 #ifdef OCTEON_MEMSIZE // avoid uvm issue

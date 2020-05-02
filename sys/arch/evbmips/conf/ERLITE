@@ -121,6 +121,7 @@ cpunode0	at mainbus?
 cpu*		at cpunode? core ?
 wdog0		at cpunode0 flags 0		# flags 1 will enable it on boot
 
+simplebus*	at fdt? pass 0
 iobus0		at mainbus?
 bootbus0	at mainbus?
 
