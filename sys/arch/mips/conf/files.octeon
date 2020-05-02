@@ -18,7 +18,7 @@ defflag 	opt_octeon.h			OCTEON_ETH_DEBUG
 						OCTEON_ETH_USENFS
 						OCTEON_USBN_CN31XX_DMA_WORKAROUND
 
-device	mainbus {}
+device	mainbus {}: fdt
 attach	mainbus at root
 file	arch/mips/cavium/mainbus.c		mainbus
 file	arch/mips/cavium/mainbus_octeon1p.c	mainbus

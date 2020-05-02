@@ -29,6 +29,10 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
 
+.if defined(BOARDMKFRAG)	# Must be a full pathname
+.include "${BOARDMKFRAG}"
+.endif
+
 .if defined(NEED_UBOOTIMAGE) && ${NEED_UBOOTIMAGE} != "no"
 _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 MKUBOOTIMAGEARGS=       -A mips -T kernel

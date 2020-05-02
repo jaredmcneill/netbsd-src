@@ -7,6 +7,8 @@ file	arch/evbmips/cavium/octeon_bootbus_machdep.c	bootbus
 
 file	arch/evbmips/evbmips/interrupt.c
 
+file	arch/evbmips/fdt/fdt_dma_machdep.c
+
 file	kern/subr_disk_mbr.c
 
 # Stack-less Just-In-Time compiler

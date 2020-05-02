@@ -22,4 +22,7 @@ makeoptions	AFLAGS+="-mips64r2 -march=octeon+"
 makeoptions	DEFTEXTADDR="0x80200000"
 makeoptions	BOARDTYPE="octeon"
 
+options 	FDT
+makeoptions	BOARDMKFRAG="${THISMIPS}/conf/mk.fdt"
+
 include 	"arch/mips/conf/files.octeon"

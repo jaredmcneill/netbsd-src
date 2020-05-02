@@ -9,6 +9,11 @@ include 	"arch/evbmips/conf/files.octeon"
 
 maxusers	32
 
+makeoptions	DTSARCH="mips"
+makeoptions	DTSGNUARCH="mips"
+makeoptions	DTSSUBDIR="cavium-octeon"
+makeoptions	DTS="ubnt_e100.dts"
+
 # XXX UVM freelists vs 4GB issue.  Enable this if you see hangs
 # waiting for memory when there are actual free pages around.
 #options 	OCTEON_MEMSIZE="(256*1024*1024)"
