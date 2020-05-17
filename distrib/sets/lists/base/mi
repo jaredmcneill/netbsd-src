@@ -4861,8 +4861,8 @@
 ./usr/share/mk/bsd.crypto.mk			base-obsolete		obsolete
 ./usr/share/mk/bsd.dep.mk			base-mk-share		share
 ./usr/share/mk/bsd.depall.mk			base-obsolete		obsolete
-./usr/share/mk/bsd.dtb.mk			base-mk-share		share
 ./usr/share/mk/bsd.doc.mk			base-mk-share		share
+./usr/share/mk/bsd.dtb.mk			base-mk-share		share
 ./usr/share/mk/bsd.endian.mk			base-mk-share		share
 ./usr/share/mk/bsd.files.mk			base-mk-share		share
 ./usr/share/mk/bsd.gcc.mk			base-mk-share		share
