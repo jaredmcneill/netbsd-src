@@ -1,4 +1,5 @@
 # $NetBSD: md.evbarm,v 1.18 2020/03/27 04:31:18 thorpej Exp $
+./boot							base-sys-root		dtb
 ./libdata/firmware/if_bwfm/brcmfmac43143-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43241b0-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43241b4-sdio.bin	base-firmware-root	firmware

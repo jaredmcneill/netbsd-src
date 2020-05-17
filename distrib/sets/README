@@ -46,6 +46,8 @@ the sets are as follows:
 	debug:	Debugging libraries (_g.a/MKDEBUGLIB) and (.debug/MKDEBUG)
 		binaries.
 
+	dtb:	Device tree blobs (MKDTB).
+
 	etc:	/etc, and associated files (/var/cron/tabs, /root,
 		etc.).  things that shouldn't be blindly reinstalled
 		on an upgrade.

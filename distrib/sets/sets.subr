@@ -152,6 +152,11 @@ else
 	debugset="debug"
 	xdebugset="xdebug"
 fi
+if [ "${MKDTB}" = "no" ]; then
+	dtbset=""
+else
+	dtbset="dtb"
+fi
 # Determine lib type. Do this first so stlib also gets set.
 if [ "${OBJECT_FMT}" = "ELF" ]; then
 	shlib=elf
@@ -163,7 +168,7 @@ stlib=$shlib
 if [ "${MKPIC}" = "no" ]; then
 	shlib=no
 fi
-nlists="base comp $debugset etc games man misc $modset rescue $testset text"
+nlists="base comp $debugset $dtbset etc games man misc $modset rescue $testset text"
 xlists="xbase xcomp $xdebugset xetc xfont xserver"
 extlists="extbase extcomp extetc"
 

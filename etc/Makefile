@@ -374,6 +374,9 @@ OBSOLETE.files=		base comp etc games man misc rescue text
 .if ${MKDEBUG} != "no"
 OBSOLETE.files+=	debug
 .endif
+.if ${MKDTB} != "no"
+OBSOLETE.files+=	dtb
+.endif
 .if ${MKKMOD} != "no"
 OBSOLETE.files+=	modules
 .endif

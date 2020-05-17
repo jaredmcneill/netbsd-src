@@ -1,0 +1,8 @@
+#	$NetBSD$
+
+DTSSUBDIR=	freescale
+DTSMAKEVARS=	CONFIG_ARCH_MXC=y
+DTSFILESCMD=	${MAKE} -C ${ARCHDTSDIR}/${DTSSUBDIR} ${DTSMAKEVARS} -v dtb-y
+DTS=		${DTSFILESCMD:sh}
+
+.include <bsd.dtb.mk>

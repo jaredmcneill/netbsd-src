@@ -559,6 +559,7 @@ level of source directory"
 	do_disk_image=false
 	do_params=false
 	do_rump=false
+	do_dtb=false
 
 	# done_{operation}=true if given operation has been done.
 	#
@@ -1046,6 +1047,7 @@ Usage: ${progname} [-EhnoPRrUuxy] [-a arch] [-B buildid] [-C cdextras]
     makewrapper         Create ${toolprefix}make-\${MACHINE} wrapper and ${toolprefix}make.
                         Always performed.
     cleandir            Run "make cleandir".  [Default unless -u is used]
+    dtb			Build devicetree blobs.
     obj                 Run "make obj".  [Default unless -o is used]
     tools               Build and install tools.
     install=idir        Run "make installworld" to \`idir' to install all sets
@@ -1379,6 +1381,7 @@ parseoptions()
 		build|\
 		cleandir|\
 		distribution|\
+		dtb|\
 		install-image|\
 		iso-image-source|\
 		iso-image|\
@@ -2136,6 +2139,21 @@ buildmodules()
 	statusmsg "Successful build of kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
 }
 
+builddtb()
+{
+	statusmsg "Building devicetree blobs for NetBSD/${MACHINE} ${DISTRIBVER}"
+	if [ "${MKOBJDIRS}" != "no" ]; then
+		make_in_dir sys/dtb obj
+	fi
+	if [ "${MKUPDATE}" = "no" ]; then
+		make_in_dir sys/dtb cleandir
+	fi
+	make_in_dir sys/dtb dependall
+	make_in_dir sys/dtb install
+
+	statusmsg "Successful build of devicetree blobs for NetBSD/${MACHINE} ${DISTRIBVER}"
+}
+
 installmodules()
 {
 	dir="$1"
@@ -2374,6 +2392,10 @@ main()
 		disk-image=*)
 			arg=${op#*=}
 			diskimage "${arg}"
+			;;
+
+		dtb)
+			builddtb
 			;;
 
 		modules)

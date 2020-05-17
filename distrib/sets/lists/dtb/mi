@@ -1,0 +1,5 @@
+# $NetBSD$
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
+./boot/dtb					dtb-base-boot		dtb

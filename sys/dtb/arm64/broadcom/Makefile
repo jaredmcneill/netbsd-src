@@ -1,0 +1,8 @@
+#	$NetBSD$
+
+DTSSUBDIR=	broadcom
+DTSMAKEVARS=	CONFIG_ARCH_BCM2835=y
+DTSFILESCMD=	${MAKE} -C ${ARCHDTSDIR}/${DTSSUBDIR} ${DTSMAKEVARS} -v dtb-y
+DTS=		${DTSFILESCMD:sh}
+
+.include <bsd.dtb.mk>

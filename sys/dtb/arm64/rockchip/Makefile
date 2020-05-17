@@ -1,0 +1,8 @@
+#	$NetBSD$
+
+DTSSUBDIR=	rockchip
+DTSMAKEVARS=	CONFIG_ARCH_ROCKCHIP=y
+DTSFILESCMD=	${MAKE} -C ${ARCHDTSDIR}/${DTSSUBDIR} ${DTSMAKEVARS} -v dtb-y
+DTS=		${DTSFILESCMD:sh}
+
+.include <bsd.dtb.mk>

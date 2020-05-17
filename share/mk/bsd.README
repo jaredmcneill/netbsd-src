@@ -197,6 +197,9 @@ MKDTRACE	If "no", do not build and install the kernel modules,
 		facility.
 		Default: no
 
+MKDTB		If "no", disables building of devicetree blobs.
+		Default: yes on aarch64 and armv7, no elsewhere.
+
 MKDYNAMICROOT	If "no", build programs in /bin and /sbin statically,
 		don't install certain libraries in /lib, and don't
 		install the shared linker into /libexec.

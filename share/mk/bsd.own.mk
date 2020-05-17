@@ -762,6 +762,11 @@ DEBUGGRP?=	wheel
 DEBUGOWN?=	root
 DEBUGMODE?=	${NONBINMODE}
 
+DTBDIR?=	/boot/dtb
+DTBGRP?=	wheel
+DTBOWN?=	root
+DTBMODE?=	${NONBINMODE}
+
 MKDIRMODE?=	0755
 MKDIRPERM?=	-m ${MKDIRMODE}
 
@@ -1188,6 +1193,13 @@ MKRADEONFIRMWARE.aarch64=	yes
 # Only install the tegra firmware on evbarm.
 MKTEGRAFIRMWARE.evbarm=		yes
 
+# Only build devicetree (dtb) files on armv7 and aarch64.
+MKDTB.aarch64=			yes
+MKDTB.earmv7=			yes
+MKDTB.earmv7hf=			yes
+MKDTB.earmv7eb=			yes
+MKDTB.earmv7hfeb=		yes
+
 # MesaLib.old and MesaLib7 go together, and MesaLib is alone.
 HAVE_MESA_VER?=	18
 .if ${HAVE_MESA_VER} == "10"
@@ -1215,7 +1227,7 @@ _MKVARS.no= \
 	MKARZERO \
 	MKBSDGREP \
 	MKCATPAGES MKCOMPATTESTS MKCOMPATX11 MKCTF \
-	MKDEBUG MKDEBUGLIB MKDTRACE \
+	MKDEBUG MKDEBUGLIB MKDTB MKDTRACE \
 	MKEXTSRC \
 	MKFIRMWARE \
 	MKGROFFHTMLDOC \

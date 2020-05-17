@@ -7,7 +7,7 @@
 #	[-M metalog] [-N etcdir] [-F setlistsdir] [-d destdir]
 #	[-t tardir] [-U] [setname ...]
 #
-# The default sets are "base comp debug etc games man misc rescue tests text"
+# The default sets are "base comp debug dtb etc games man misc rescue tests text"
 # The X sets are "xbase xcomp xdebug xetc xfont xserver"
 # The extsrc sets are "extbase extcomp extetc"
 #

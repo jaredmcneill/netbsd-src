@@ -1,0 +1,8 @@
+#	$NetBSD$
+
+DTSSUBDIR=	allwinner
+DTSMAKEVARS=	CONFIG_ARCH_SUNXI=y
+DTSFILESCMD=	${MAKE} -C ${ARCHDTSDIR}/${DTSSUBDIR} ${DTSMAKEVARS} -v dtb-y
+DTS=		${DTSFILESCMD:sh}
+
+.include <bsd.dtb.mk>

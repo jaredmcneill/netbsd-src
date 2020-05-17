@@ -7,6 +7,10 @@ SUBDIR=	altq arch compat dev fs miscfs \
         netmpls \
 	nfs opencrypto sys ufs uvm
 
+.if make(obj) || make(cleandir) || ${MKDTB} != "no"
+SUBDIR+=dtb
+.endif
+
 .if make(obj) || make(cleandir) || ${MKKMOD} != "no"
 SUBDIR+=modules
 .endif
