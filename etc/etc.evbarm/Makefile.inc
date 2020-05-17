@@ -120,6 +120,7 @@ __mkimage: .USE
 	HOST_SH=${HOST_SH} \
 	KERNOBJDIR=${KERNOBJDIR} \
 	MACHINE=${MACHINE} \
+	MKDTB=${MKDTB} \
 	${HOST_SH} ${MKIMAGE} -x -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
 	    -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
 	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz

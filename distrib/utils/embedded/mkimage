@@ -62,6 +62,9 @@ GZIP_CMD=${TOOL_GZIP:-gzip} # ${GZIP} is special to gzip(1)
 
 src="/usr/src"
 sets="base comp etc games man misc modules rescue tests text"
+if [ "${MKDTB}" != "no" ]; then
+	sets="$sets dtb"
+fi
 xsets="xbase xcomp xetc xfont xserver" 
 minfree="10%"
 bar="==="
@@ -227,6 +230,9 @@ if [ -n "${msdosid}" ]; then
 	    -o "volume_label=NETBSD${fat_opt}" \
 	    -O $((${init} / 2))m -s $((${boot} / 2))m \
 	    ${image} ${mnt}/boot
+	# remove the contents of ${mnt}/boot so they don't end up on the ffs
+	# partition as well
+	rm -rf "${mnt}/boot/*"
 fi
 
 if [ -z "${bootonly}" ]; then
