@@ -1,0 +1,4 @@
+#	$NetBSD$
+
+./boot
+./boot/dtb

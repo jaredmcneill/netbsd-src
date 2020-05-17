@@ -57,6 +57,10 @@ EXTRA_DIST_FILES+=	NetBSD.dist.tests.compat
 .endif
 .endif
 
+.if ${MKDTB} != "no"
+EXTRA_DIST_FILES+=	NetBSD.dist.dtb
+.endif
+
 .if ${MKDTRACE} != "no"
 EXTRA_DIST_FILES+=	NetBSD.dist.dtrace
 .endif
