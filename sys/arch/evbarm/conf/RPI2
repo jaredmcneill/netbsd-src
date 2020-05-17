@@ -12,7 +12,6 @@ no options 	TPIDRPRW_IS_CURLWP
 no options 	ARM11_COMPAT_MMU
 no options 	__HAVE_MM_MD_CACHE_ALIASING
 no makeoptions	CPUFLAGS
-no makeoptions	DTS
 
 #options 	VERBOSE_INIT_ARM
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
@@ -27,13 +26,6 @@ options 	TPIDRPRW_IS_CURCPU
 makeoptions 	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
 options 	__HAVE_GENERIC_CPU_INITCLOCKS
 
-makeoptions	DTS="
-	bcm2836-rpi-2-b.dts
-	bcm2837-rpi-3-a-plus.dts
-	bcm2837-rpi-3-b-plus.dts
-	bcm2837-rpi-3-b.dts
-	bcm2837-rpi-cm3-io3.dts
-"
 # Architecture options
 
 no bcmtmr0	at fdt?			# System Timer

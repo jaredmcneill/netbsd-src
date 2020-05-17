@@ -8,16 +8,6 @@ include	"arch/evbarm/conf/std.imx"
 include	"arch/evbarm/conf/files.imx"
 include	"arch/evbarm/conf/GENERIC.common"
 
-makeoptions	DTSGNUARCH="arm"
-makeoptions	DTSSUBDIR="fsl"
-makeoptions	DTS="
-	imx6q-hummingboard.dts
-	imx6dl-hummingboard.dts
-	imx6q-hummingboard2.dts
-	imx6dl-hummingboard2.dts
-	imx6qp-sabresd.dts
-"
-
 options 	MULTIPROCESSOR
 
 options 	CPU_CORTEXA9
