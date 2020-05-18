@@ -133,3 +133,4 @@
 ./boot/dtb/rockchip/rk3399-rockpro64.dtb                     dtb-base-boot  dtb
 ./boot/dtb/rockchip/rk3399-sapphire.dtb                      dtb-base-boot  dtb
 ./boot/dtb/rockchip/rk3399-sapphire-excavator.dtb            dtb-base-boot  dtb
+./boot/dtb/rockchip/rk3399-pinebook-pro.dtb                  dtb-base-boot  dtb

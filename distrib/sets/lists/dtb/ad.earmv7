@@ -293,3 +293,7 @@
 ./boot/dtb/zynq-zturn.dtb                            dtb-base-boot  dtb
 ./boot/dtb/zynq-zybo.dtb                             dtb-base-boot  dtb
 ./boot/dtb/zynq-zybo-z7.dtb                          dtb-base-boot  dtb
+./boot/dtb/sun5i-r8-pocketchip.dtb                   dtb-base-boot  dtb
+./boot/dtb/sun7i-a20-olinuxino-lime2-emmc-spi.dtb    dtb-base-boot  dtb
+./boot/dtb/sun8i-h2-plus-bananapi-p2-zero.dtb        dtb-base-boot  dtb
+./boot/dtb/sun8i-h3-nanopi-r1.dtb                    dtb-base-boot  dtb

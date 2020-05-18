@@ -24,7 +24,17 @@ DTSMAKEVARS=	CONFIG_SOC_AM33XX=y		\
 		CONFIG_ARCH_VEXPRESS=y		\
 		CONFIG_ARCH_ZYNQ=y
 .endif
+
 DTSFILESCMD=	${MAKE} -C ${ARCHDTSDIR} ${DTSMAKEVARS} -v dtb-y
 DTS=		${DTSFILESCMD:sh}
+
+
+# Extra .dts files from arch/arm/dts
+.if !empty(MACHINE_ARCH:Mearmv7*)
+DTS+=		sun5i-r8-pocketchip.dts
+DTS+=		sun7i-a20-olinuxino-lime2-emmc-spi.dts
+DTS+=		sun8i-h2-plus-bananapi-p2-zero.dts
+DTS+=		sun8i-h3-nanopi-r1.dts
+.endif
 
 .include <bsd.dtb.mk>
