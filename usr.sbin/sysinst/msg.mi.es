@@ -819,6 +819,9 @@ message set_system
 message set_compiler
 {Herramientas del compilador}
 
+message set_dtb
+{Devicetree blobs}
+
 message set_games
 {Juegos}
 

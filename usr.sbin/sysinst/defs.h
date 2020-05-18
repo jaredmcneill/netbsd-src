@@ -125,6 +125,7 @@ enum {
     SET_BASE,		/* base */
     SET_ETC,		/* /etc */
     SET_COMPILER,	/* compiler tools */
+    SET_DTB,		/* devicetree blobs */
     SET_GAMES,		/* text games */
     SET_MAN_PAGES,	/* online manual pages */
     SET_MISC,		/* miscellaneuous */
@@ -170,7 +171,11 @@ enum {
 #define SET_KERNEL SET_KERNEL_1, SET_KERNEL_2, SET_KERNEL_3, SET_KERNEL_4, \
 		    SET_KERNEL_5, SET_KERNEL_6, SET_KERNEL_7, SET_KERNEL_8
 /* Core system sets */
+#ifdef HAVE_DTB
+#define SET_CORE SET_MODULES, SET_BASE, SET_DTB, SET_ETC
+#else
 #define SET_CORE SET_MODULES, SET_BASE, SET_ETC
+#endif
 /* All system sets */
 #define SET_SYSTEM SET_CORE, SET_COMPILER, SET_GAMES, \
 		    SET_MAN_PAGES, SET_MISC, SET_RESCUE, \

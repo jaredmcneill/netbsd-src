@@ -72,6 +72,10 @@ SETS_TAR_SUFF=${"${USE_XZ_SETS:Uno}"!="no":?"tar.xz":"tgz"}
 CPPFLAGS+=	-DUSING_PAXASTAR
 .endif
 
+.if ${MKDTB:Uno} == "no"
+CPPFLAGS+=	-DHAVE_DTB
+.endif
+
 CATALOGDIR=	/usr/share/sysinst/catalog
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-I${.CURDIR}/../../../../sbin/fsck \

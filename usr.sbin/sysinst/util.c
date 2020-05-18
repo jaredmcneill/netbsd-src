@@ -116,6 +116,9 @@ distinfo dist_list[] = {
 
 	{"modules",		SET_MODULES,		false, MSG_set_modules, NULL},
 	{"base",		SET_BASE,		false, MSG_set_base, NULL},
+#ifdef HAVE_DTB
+	{"dtb",			SET_DTB,		false, MSG_set_dtb, NULL},
+#endif
 	{"etc",			SET_ETC,		false, MSG_set_system, NULL},
 	{"comp",		SET_COMPILER,		false, MSG_set_compiler, NULL},
 	{"games",		SET_GAMES,		false, MSG_set_games, NULL},
