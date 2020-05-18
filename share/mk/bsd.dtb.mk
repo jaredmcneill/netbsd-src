@@ -42,19 +42,7 @@ DTSDIR+=$S/external/gpl2/dts/dist/arch/${_arch}/boot/dts/${DTSSUBDIR}
 
 DTSPATH=${DTSINC} ${DTSDIR} ${.OBJDIR}/dts
 
-.SUFFIXES: .dtd .dtb .dts
-
-.dts.dtd:
-	(${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
-	    -include ${.IMPSRC} /dev/null | \
-	${TOOL_DTC} ${DTSPATH:@v@-i ${v}@} -I dts -O dtb \
-	    -p ${DTSPADDING} -b 0 -@ -o /dev/null -d /dev/stdout | \
-	${TOOL_SED} -e 's@/dev/null@${.TARGET:.dtd=.dtb}@' \
-	    -e 's@<stdin>@${.IMPSRC}@' && \
-	${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
-	    -include ${.IMPSRC} -M /dev/null | \
-	${TOOL_SED} -e 's@null.o@${.TARGET:.dtd=.dtb}@' \
-	    -e 's@/dev/null@@') > ${.TARGET}
+.SUFFIXES: .dtb .dts
 
 .dts.dtb:
 	${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
@@ -64,8 +52,7 @@ DTSPATH=${DTSINC} ${DTSDIR} ${.OBJDIR}/dts
 
 .PATH.dts: ${DTSDIR}
 
-DEPS+= ${DTS:.dts=.dtd}
-DTB=  ${DTS:.dts=.dtb}
+DTB= 		 ${DTS:.dts=.dtb}
 
 dtb:		${DTB}
 
