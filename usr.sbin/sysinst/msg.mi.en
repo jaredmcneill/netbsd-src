@@ -795,7 +795,7 @@ message set_compiler
 {Compiler tools}
 
 message set_dtb
-{Devicetree blobs}
+{Devicetree hardware descriptions}
 
 message set_games
 {Games}

@@ -820,7 +820,7 @@ message set_compiler
 {Herramientas del compilador}
 
 message set_dtb
-{Devicetree blobs}
+{Devicetree hardware descriptions}
 
 message set_games
 {Juegos}

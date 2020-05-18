@@ -868,7 +868,7 @@ message set_compiler
 {Outils de développement}
 
 message set_dtb
-{Devicetree blobs}
+{Devicetree hardware descriptions}
 
 message set_games
 {Jeux}

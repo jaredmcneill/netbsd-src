@@ -125,7 +125,7 @@ enum {
     SET_BASE,		/* base */
     SET_ETC,		/* /etc */
     SET_COMPILER,	/* compiler tools */
-    SET_DTB,		/* devicetree blobs */
+    SET_DTB,		/* devicetree hardware descriptions */
     SET_GAMES,		/* text games */
     SET_MAN_PAGES,	/* online manual pages */
     SET_MISC,		/* miscellaneuous */
