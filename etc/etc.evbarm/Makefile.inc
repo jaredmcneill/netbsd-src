@@ -197,10 +197,7 @@ SNAP_MD_POST_DEPS+=	smp_rpi_inst
 
 snap_md_post: check_DESTDIR check_RELEASEDIR snap_post .WAIT ${SNAP_MD_POST_DEPS}
 
-# For DTB based builds, only include the ELF kernel in the kernel sets
-.if "${MKDTB}" == "no"
 KERNEL_SUFFIXES=	bin img srec ub
-.endif
 
 INSTALLATION_DIRS+=	binary/gzimg		\
 			installation/instkernel
