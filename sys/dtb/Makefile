@@ -4,23 +4,25 @@ TARGETS+=	dtblist
 
 .include <bsd.own.mk>
 
-.if !defined(TARGET_ARCH)
-.  if !empty(MACHINE_ARCH:Mearmv[67]*)
-TARGET_ARCH=	arm
-.  endif
-.  if ${MACHINE_ARCH} == "aarch64"
-TARGET_ARCH=	arm64
-.  endif
+.if !empty(MACHINE_ARCH:Mearmv[67]*)
+SUBDIR+=	arm
 .endif
 
-SUBDIR+=	${TARGET_ARCH}
+.if !empty(MACHINE_ARCH:Maarch64*)
+SUBDIR+=	arm64
+.endif
 
 .include <bsd.subdir.mk>
 
 # Regenerate MD set lists in distrib/sets/lists/dtb. Run this whenever
 # new dts files are imported.
+
+TARGET_ARCH_LIST=	earmv6 earmv6hf earmv6eb earmv6hfeb
+TARGET_ARCH_LIST+=	earmv7 earmv7hf earmv7hf earmv7hfeb
+TARGET_ARCH_LIST+=	aarch64 aarch64eb
+
 update-sets:
-	${MAKE} TARGET_ARCH=arm dtblist | grep '^[\.#]' | column -t \
-	    >${.CURDIR}/../../distrib/sets/lists/dtb/ad.arm
-	${MAKE} TARGET_ARCH=arm64 dtblist | grep '^[\.#]' | column -t \
-	    >${.CURDIR}/../../distrib/sets/lists/dtb/ad.aarch64
+.for _arch in ${TARGET_ARCH_LIST}
+	${MAKE} MACHINE_ARCH=${_arch} dtblist | grep '^[\.#]' | \
+	     column -t >${.CURDIR}/../../distrib/sets/lists/dtb/ad.${_arch}
+.endfor
