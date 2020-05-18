@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.72 2020/05/17 00:54:05 riastradh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.74 2020/05/17 16:01:06 riastradh Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.179 2020/01/11 21:34:03 cheloha Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.72 2020/05/17 00:54:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.74 2020/05/17 16:01:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -405,7 +405,7 @@ hifn_attach(device_t parent, device_t self, void *aux)
 	sc->sc_cmd_cache = pool_cache_init(sizeof(struct hifn_command),
 	    0, 0, 0, "hifncmd", NULL, IPL_VM,
 	    &hifn_cmd_ctor, &hifn_cmd_dtor, sc);
-	pool_cache_setlowat(sc->sc_cmd_cache, sc->sc_maxses);
+	pool_cache_prime(sc->sc_cmd_cache, sc->sc_maxses);
 
 	WRITE_REG_0(sc, HIFN_0_PUCNFG,
 	    READ_REG_0(sc, HIFN_0_PUCNFG) | HIFN_PUCNFG_CHIPID);
@@ -2409,9 +2409,9 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 		if (hifn_debug)
 			printf("%s: requeue request\n", device_xname(sc->sc_dv));
 #endif
-		free(cmd, M_DEVBUF);
 		sc->sc_needwakeup |= CRYPTO_SYMQ;
 		mutex_spin_exit(&sc->sc_mtx);
+		pool_cache_put(sc->sc_cmd_cache, cmd);
 		return (err);
 	}
 
