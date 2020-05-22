@@ -88,3 +88,4 @@ device-major spi       char 347		   spi
 device-major ipmi      char 354		   ipmi
 device-major vhci      char 355            vhci
 device-major vio9p     char 356		   vio9p
+device-major zd        char 357 block 357  zd
