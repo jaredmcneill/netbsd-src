@@ -1,0 +1,5 @@
+# $NetBSD$
+
+resize_root=YES
+resize_root_flags="-p"
+resize_root_postcmd="/sbin/reboot -n"
