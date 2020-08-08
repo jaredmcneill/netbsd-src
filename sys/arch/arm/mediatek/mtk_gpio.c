@@ -1118,8 +1118,6 @@ mtk_gpio_attach(device_t parent, device_t self, void *aux)
 		fdtbus_register_pinctrl_config(self, child, &mtk_pinctrl_funcs);
 	}
 
-	fdtbus_pinctrl_configure();
-
 	fdtbus_register_interrupt_controller(self, phandle,
 					     &mtk_gpio_fdt_intrfuncs);
 
