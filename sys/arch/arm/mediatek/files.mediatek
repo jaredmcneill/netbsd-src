@@ -1,0 +1,84 @@
+#	$NetBSD$
+#
+# Configuration info for MediaTek SoCs
+#
+#
+
+file	arch/arm/mediatek/mediatek_platform.c	soc_mediatek
+
+file	arch/arm/mediatek/mtk_mc_smp.c		soc_mediatek_mc
+
+# SOC parameters
+defflag	opt_soc.h		SOC_MEDIATEK
+defflag opt_soc.h		SOC_MEDIATEK_MC
+defflag	opt_soc.h		SOC_MT7623: SOC_MEDIATEK, SOC_MEDIATEK_MC
+
+# Clock / reset units (common code)
+define	mtk_cru
+file	arch/arm/mediatek/mtk_cru.c		mtk_cru
+file	arch/arm/mediatek/mtk_cru_div.c		mtk_cru
+file	arch/arm/mediatek/mtk_cru_factor.c	mtk_cru
+file	arch/arm/mediatek/mtk_cru_fixed.c	mtk_cru
+file	arch/arm/mediatek/mtk_cru_gate.c	mtk_cru
+file	arch/arm/mediatek/mtk_cru_mux.c		mtk_cru
+file	arch/arm/mediatek/mtk_cru_pll.c		mtk_cru
+
+# External interupt support
+define	mtk_eintc
+file	arch/arm/mediatek/mtk_eintc.c		mtk_eintc
+
+# GPIO / pin mux control
+device	mtkgpio: mtk_eintc, gpiobus
+attach	mtkgpio at fdt with mtk_gpio
+file	arch/arm/mediatek/mtk_gpio.c		mtk_gpio
+file	arch/arm/mediatek/mt2701_gpio.c		mtk_gpio & soc_mt7623
+
+# MT6577-compatible general purpose timers
+device	mt6577tmr
+attach	mt6577tmr at fdt with mt6577_timer
+file	arch/arm/mediatek/mt6577_timer.c	mt6577_timer
+
+# MT6589-compatible Top Reset Generate Unit
+# (includes watchdog timer)
+device	mt6589toprgu
+attach	mt6589toprgu at fdt with mt6589_toprgu
+file	arch/arm/mediatek/mt6589_toprgu.c	mt6589_toprgu
+
+# MT6577-compatible SYSIRQ interrupt polarity controller
+device	mt6577sysirq
+attach	mt6577sysirq at fdt with mt6577_sysirq
+file	arch/arm/mediatek/mt6577_sysirq.c	mt6577_sysirq
+
+# MT6577-compatible UART
+attach	com at fdt with mt6577com
+file	arch/arm/mediatek/mt6577_uart.c		mt6577com
+
+# MT2701-compatible APMIXEDSYS / PLL block
+device	mt2701apmsys: mtk_cru
+attach	mt2701apmsys at fdt with mt2701_apmsys
+file	arch/arm/mediatek/mt2701_apmsys.c	mt2701_apmsys
+
+# MT2701-compatible ETHSYS
+device	mt2701ethsys: mtk_cru
+attach	mt2701ethsys at fdt with mt2701_ethsys
+file	arch/arm/mediatek/mt2701_ethsys.c	mt2701_ethsys
+
+# MT2701-compatible HIFSYS
+device	mt2701hifsys: mtk_cru
+attach	mt2701hifsys at fdt with mt2701_hifsys
+file	arch/arm/mediatek/mt2701_hifsys.c	mt2701_hifsys
+
+# MT2701-compatible Infrastructure Configuration block
+device	mt2701infracfg: mtk_cru
+attach	mt2701infracfg at fdt with mt2701_infracfg
+file	arch/arm/mediatek/mt2701_infracfg.c	mt2701_infracfg
+
+# MT2701-compatible Peripheral Controller
+device	mt2701pericfg: mtk_cru
+attach	mt2701pericfg at fdt with mt2701_pericfg
+file	arch/arm/mediatek/mt2701_pericfg.c	mt2701_pericfg
+
+# MT2701-compatible Top Clock Generator
+device	mt2701topckgen: mtk_cru
+attach	mt2701topckgen at fdt with mt2701_topckgen
+file	arch/arm/mediatek/mt2701_topckgen.c	mt2701_topckgen

@@ -24,6 +24,7 @@ options 	SOC_IMX6Q
 options 	SOC_IMX6QDL
 options 	SOC_IMX7D
 options 	SOC_MESON8B
+options 	SOC_MT7623
 options 	SOC_OMAP3
 options 	SOC_SUN4I_A10
 options 	SOC_SUN5I_A13
@@ -124,6 +125,12 @@ imx6ccm* 	at fdt? pass 1		# i.MX6 CCM
 imx7dccm*	at fdt? pass 2		# i.MX7D CCM
 meson8bclkc* 	at fdt? pass 2		# Amlogic Meson8b clock controller
 mesonresets* 	at fdt? pass 2		# Amlogic Meson misc. clock resets
+mt2701apmsys*	at fdt? pass 2		# MediaTek MT2701 APMIXEDSYS
+mt2701ethsys*	at fdt? pass 2		# MediaTek MT2701 ETHSYS
+mt2701hifsys*	at fdt? pass 2		# MediaTek MT2701 HIFSYS
+mt2701infracfg*	at fdt? pass 3		# MediaTek MT2701 INFRACFG
+mt2701pericfg*	at fdt? pass 2		# MediaTek MT2701 PERICFG
+mt2701topckgen*	at fdt? pass 2		# MediaTek MT2701 TOPCKGEN
 omap3cm*	at fdt? pass 1		# TI OMAP3 CM
 omap3prm*	at fdt? pass 1		# TI OMAP3 PRM
 sun4ia10ccu* 	at fdt? pass 2		# Allwinner A10/A20 CCU
@@ -176,6 +183,7 @@ mct*		at fdt? pass 2		# Exynos Multi Core Timer (MCT)
 armgtmr*	at mct?
 omaptimer*	at fdt?			# TI OMAP Timer
 meson6timer* 	at fdt?			# Amlogic Timer
+mt6577tmr*	at fdt? pass 1		# MT6577 General Purpose Timers
 sunxitimer* 	at fdt?			# Allwinner async timer
 sunxihstimer* 	at fdt?			# Allwinner High-Speed timer
 tegratimer* 	at fdt?			# Timers
@@ -184,6 +192,7 @@ tegratimer* 	at fdt?			# Timers
 bcmpmwdog* 	at fdt?			# Broadcom BCM283x watchdog
 dwcwdt* 	at fdt?			# DesignWare watchdog
 mesonwdt* 	at fdt?			# Amlogic Meson watchdog
+mt6589toprgu*	at fdt?			# MT6589 TOPRGU
 sunxiwdt* 	at fdt?			# Allwinner watchdog
 tiwdt*		at fdt?			# TI OMAP watchdog
 
@@ -194,6 +203,7 @@ bcmicu* 	at fdt? pass 1		# Broadcom BCM283x ICU
 exyointr* 	at fdt? pass 1		# Samsung Exynos ICU
 imxgpc* 	at fdt? pass 2		# i.MX General Power Controller INTC
 imx7gpc*	at fdt? pass 2		# i.MX General Power Controller v2 INTC
+mt6577sysirq*	at fdt? pass 1		# MT6577 SYSIRQ controller
 omapintc*	at fdt? pass 2		# TI OMAP INTC
 tegralic* 	at fdt? pass 1		# NVIDIA Tegra LIC
 sunxiintc* 	at fdt? pass 1		# Allwinner INTC
@@ -239,6 +249,7 @@ bcmgpio* 	at fdt?			# Broadcom BCM283x GPIO
 exyopctl* 	at fdt? pass 2		# Samsung Exynos GPIO
 imxgpio*	at fdt? pass 3		# i.MX GPIO
 mesonpinctrl* 	at fdt? pass 2		# Amlogic Meson GPIO
+mtkgpio*	at fdt? pass 2		# MediaTek GPIO
 plgpio* 	at fdt?			# ARM PrimeCell GPIO
 sunxigpio* 	at fdt? pass 3		# Allwinner GPIO
 tegragpio* 	at fdt? pass 2		# NVIDIA Tegra GPIO

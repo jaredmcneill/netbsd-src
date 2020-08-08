@@ -1,0 +1,20 @@
+==> GPIO node in device tree is funky.  It actually points to the EINTC
+interrupt controller, and has a separate property to go and fetch the
+GPIO controller registers.  There is no separate EINTC node in the device
+tree.
+
+==> The mt7623n manual documents a SYS_CIRQ controller as the "System
+Interrupt Controller", however the address it documents does not appear
+in the mt7623 device tree.  It DOES, however, appear in the mt2701 device
+tree (as "mediatek,mtk-cirq") (many of the mt7623 IP blocks come from
+the mt2701).  It appears as though this functional block is truly not
+present on the mt7623, and is just a mistake in the manual.
+
+==> Related, both the mt2701 and the mt7623 have a mystery interrupt
+controller called "sysirq" ("mediatek,mt6577-sysirq").  This device does
+not appear in the mt7623 manual, as far as I can tell.  Linux has a driver
+for it, and it appears that it exists solely to invert the polarity of
+incoming interrupt signals before they are routed to its interrupt parent.
+On the mt2701, the "cirq" parents to the "sysirq".  On the mt7623, the PCIe
+parents to the "sysirq".
+
