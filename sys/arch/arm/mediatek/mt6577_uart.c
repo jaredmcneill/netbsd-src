@@ -109,7 +109,7 @@ mt6577_uart_attach(device_t parent, device_t self, void *aux)
 	void *ih;
 
 	sc->sc_dev = self;
-	sc->sc_type = COM_TYPE_MEDIATEK;
+	sc->sc_type = COM_TYPE_NORMAL;
 
 	int error = fdtbus_get_reg(phandle, 0, &addr, &size);
 	if (error) {
@@ -191,7 +191,7 @@ mt6577_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 
 	mt6577_uart_init_regs(&regs, bst, bsh, addr, size);
 
-	if (comcnattach1(&regs, speed, uart_freq, COM_TYPE_MEDIATEK, flags)) {
+	if (comcnattach1(&regs, speed, uart_freq, COM_TYPE_NORMAL, flags)) {
 		panic("cannot attach MT6577 UART console");
 	}
 
