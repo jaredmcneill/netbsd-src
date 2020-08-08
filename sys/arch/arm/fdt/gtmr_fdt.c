@@ -47,12 +47,18 @@ __KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.7 2017/11/30 14:51:01 skrll Exp $");
 static int	gtmr_fdt_match(device_t, cfdata_t, void *);
 static void	gtmr_fdt_attach(device_t, device_t, void *);
 
+static int	gtmr_fdt_select_timer(const int, char *, size_t);
+
 static void	gtmr_fdt_cpu_hatch(void *, struct cpu_info *);
 
 CFATTACH_DECL_NEW(gtmr_fdt, 0, gtmr_fdt_match, gtmr_fdt_attach, NULL, NULL);
 
-/* The virtual timer list entry */
-#define GTMR_VTIMER 2
+/* Interrupt resources */
+#define	GTMR_NONE		-1	/* Not selected */
+#define	GTMR_PHYS		0	/* Physical, secure */
+#define	GTMR_PHYS_NS		1	/* Physical, non-secure */
+#define GTMR_VIRT		2	/* Virtual */
+#define	GTMR_HYP		3	/* Hypervisor */
 
 static int
 gtmr_fdt_match(device_t parent, cfdata_t cf, void *aux)
@@ -70,6 +76,8 @@ gtmr_fdt_match(device_t parent, cfdata_t cf, void *aux)
 static void
 gtmr_fdt_attach(device_t parent, device_t self, void *aux)
 {
+	prop_dictionary_t dict = device_private(self);
+
 	aprint_naive("\n");
 	aprint_normal(": Generic Timer\n");
 
@@ -81,12 +89,21 @@ gtmr_fdt_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 
 	char intrstr[128];
-	if (!fdtbus_intr_str(phandle, GTMR_VTIMER, intrstr, sizeof(intrstr))) {
+
+	const int index = gtmr_fdt_select_timer(phandle, intrstr, sizeof(intrstr));
+	if (index == GTMR_NONE) {
 		aprint_error(": failed to decode interrupt\n");
 		return;
 	}
 
-	void *ih = fdtbus_intr_establish(phandle, GTMR_VTIMER, IPL_CLOCK,
+	if (index == GTMR_PHYS || index == GTMR_PHYS_NS)
+		prop_dictionary_set_bool(dict, "physical", true);
+
+	u_int freq;
+	if (of_getprop_uint32(phandle, "clock-frequency", &freq) == 0)
+		prop_dictionary_set_uint32(dict, "frequency", freq);
+
+	void *ih = fdtbus_intr_establish(phandle, index, IPL_CLOCK,
 	    FDT_INTR_MPSAFE, gtmr_intr, NULL);
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
@@ -98,6 +115,33 @@ gtmr_fdt_attach(device_t parent, device_t self, void *aux)
 
 	arm_fdt_cpu_hatch_register(self, gtmr_fdt_cpu_hatch);
 	arm_fdt_timer_register(gtmr_cpu_initclocks);
+}
+
+static int
+gtmr_fdt_select_timer(const int phandle, char *intrstr, size_t len)
+{
+	int index = 0;
+
+#ifdef __arm__
+	const int timer_sel[] = { GTMR_VIRT, GTMR_PHYS, GTMR_NONE };
+
+	/*
+	 * For 32-bit Arm, if we can not guarantee that firmware has
+	 * configured the timer just use the physical secure timer.
+	 */
+	if (of_hasprop(phandle, "arm,cpu-registers-not-fw-configured"))
+		index++;
+#else
+	const int timer_sel[] = { GTMR_VIRT, GTMR_PHYS_NS, GTMR_NONE };
+#endif
+
+	for (; timer_sel[index] != GTMR_NONE; index++) {
+		/* If we can decode this interrupt, we are done. */
+		if (fdtbus_intr_str(phandle, index, intrstr, len))
+			break;
+	}
+
+	return timer_sel[index];
 }
 
 static void

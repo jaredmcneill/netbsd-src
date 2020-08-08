@@ -112,7 +112,8 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * This runs at a fixed frequency of 1 to 50MHz.
 	 */
-	if (!prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq))
+	if (!prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq) &&
+	    !prop_dictionary_get_uint32(pdict, "frequency", &sc->sc_freq))
 		sc->sc_freq = gtmr_cntfrq_read();
 
 	if (!prop_dictionary_get_bool(dict, "physical", &sc->sc_physical))
