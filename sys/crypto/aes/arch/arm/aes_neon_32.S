@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_32.S,v 1.4 2020/07/27 20:57:23 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_32.S,v 1.6 2020/08/16 18:02:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: aes_neon_32.S,v 1.4 2020/07/27 20:57:23 riastradh Exp $")
+RCSID("$NetBSD: aes_neon_32.S,v 1.6 2020/08/16 18:02:03 riastradh Exp $")
 
 	.fpu	neon
 
@@ -228,15 +228,19 @@ END(dsbo_1)
  * aes_neon_enc1(const struct aesenc *enc@r0, uint8x16_t x@q0,
  *     unsigned nrounds@r1)
  *
- *	With -mfloat-abi=soft(fp) (here spelled `#ifdef _KERNEL'):
+ *	With -mfloat-abi=soft(fp) (i.e., __SOFTFP__):
  *
  * uint8x16_t@(r0,r1,r2,r3)
  * aes_neon_enc1(const struct aesenc *enc@r0,
  *     uint8x16_t x@(r2,r3,sp[0],sp[4]), nrounds@sp[8])
  */
 ENTRY(aes_neon_enc1)
-#ifdef _KERNEL
+#ifdef __SOFTFP__
+#ifdef __ARM_BIG_ENDIAN
+	vmov	d0, r3, r2		/* d0 := x lo */
+#else
 	vmov	d0, r2, r3		/* d0 := x lo */
+#endif
 	vldr	d1, [sp]		/* d1 := x hi */
 	ldr	r1, [sp, #8]		/* r1 := nrounds */
 #endif
@@ -270,7 +274,7 @@ ENTRY(aes_neon_enc1)
 	ldr	r12, .Lconstants_addr
 	adr	r11, .Lconstants_addr
 
-	vld1.64	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
+	vld1.8	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
 	movw	r3, #0
 	vmov.i8	q1, #0x0f
 
@@ -280,8 +284,8 @@ ENTRY(aes_neon_enc1)
 	/* (q4, q5) := (iptlo, ipthi) */
 	add	r6, r12, #(iptlo - .Lconstants)
 	add	r7, r12, #(ipthi - .Lconstants)
-	vld1.64	{d8-d9}, [r6 :128]
-	vld1.64	{d10-d11}, [r7 :128]
+	vld1.8	{d8-d9}, [r6 :128]
+	vld1.8	{d10-d11}, [r7 :128]
 
 	/* load the rest of the constants */
 	add	r4, r12, #(sb1_0 - .Lconstants)
@@ -290,12 +294,12 @@ ENTRY(aes_neon_enc1)
 	add	r7, r12, #(sb2_1 - .Lconstants)
 	add	r8, r12, #(inv - .Lconstants)
 	add	r10, r12, #(inva - .Lconstants)
-	vld1.64	{d12-d13}, [r4 :128]	/* q6 = sb1[0] */
-	vld1.64	{d14-d15}, [r5 :128]	/* q7 = sb1[1] */
-	vld1.64	{d16-d17}, [r6 :128]	/* q8 = sb2[0] */
-	vld1.64	{d18-d19}, [r7 :128]	/* q9 = sb2[1] */
-	vld1.64	{d20-d21}, [r8 :128]	/* q10 = inv */
-	vld1.64	{d22-d23}, [r10 :128]	/* q11 = inva */
+	vld1.8	{d12-d13}, [r4 :128]	/* q6 = sb1[0] */
+	vld1.8	{d14-d15}, [r5 :128]	/* q7 = sb1[1] */
+	vld1.8	{d16-d17}, [r6 :128]	/* q8 = sb2[0] */
+	vld1.8	{d18-d19}, [r7 :128]	/* q9 = sb2[1] */
+	vld1.8	{d20-d21}, [r8 :128]	/* q10 = inv */
+	vld1.8	{d22-d23}, [r10 :128]	/* q11 = inva */
 
 	/* (r4, r5) := (&mc_forward[0], &mc_backward[0]) */
 	add	r4, r12, #(mc_forward - .Lconstants)
@@ -319,7 +323,7 @@ ENTRY(aes_neon_enc1)
 	b	2f
 
 	_ALIGN_TEXT
-1:	vld1.64	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
+1:	vld1.8	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
 
 	/* q0 := A = rk[i] + sb1_0(io) + sb1_1(jo) */
 	vtbl.8	d24, {d12-d13}, d4
@@ -339,8 +343,8 @@ ENTRY(aes_neon_enc1)
 	/* (q12, q13) := (mc_forward[rmod4], mc_backward[rmod4]) */
 	add	r6, r4, r3, lsl #4
 	add	r7, r5, r3, lsl #4
-	vld1.64	{d24-d25}, [r6]
-	vld1.64	{d26-d27}, [r7]
+	vld1.8	{d24-d25}, [r6]
+	vld1.8	{d26-d27}, [r7]
 
 	/* q15 := A2_B = A2 + A(mcf) */
 	vtbl.8	d30, {d0-d1}, d24
@@ -412,11 +416,11 @@ ENTRY(aes_neon_enc1)
 	add	r6, r12, #(sbo_0 - .Lconstants)
 	add	r7, r12, #(sbo_1 - .Lconstants)
 	add	r8, r8, r3, lsl #4
-	vld1.64	{d12-d13}, [r6 :128]
-	vld1.64	{d14-d15}, [r7 :128]
-	vld1.64	{d30-d31}, [r8 :128]
+	vld1.8	{d12-d13}, [r6 :128]
+	vld1.8	{d14-d15}, [r7 :128]
+	vld1.8	{d30-d31}, [r8 :128]
 
-	vld1.64	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
+	vld1.8	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
 
 	/* (q2, q3) := (sbo_0(io), sbo_1(jo)) */
 	vtbl.8	d4, {d12-d13}, d4
@@ -434,9 +438,14 @@ ENTRY(aes_neon_enc1)
 
 	vpop	{d8-d15}
 	pop	{r4, r5, r6, r7, r8, r10, r11, lr}
-#ifdef _KERNEL
+#ifdef __SOFTFP__
+#ifdef __ARM_BIG_ENDIAN
+	vmov	r1, r0, d0
+	vmov	r3, r2, d1
+#else
 	vmov	r0, r1, d0
 	vmov	r2, r3, d1
+#endif
 #endif
 	bx	lr
 END(aes_neon_enc1)
@@ -457,8 +466,12 @@ END(aes_neon_enc1)
  *     uint8x16_t x@(r2,r3,sp[0],sp[4]), nrounds@sp[8])
  */
 ENTRY(aes_neon_dec1)
-#ifdef _KERNEL
+#ifdef __SOFTFP__
+#ifdef __ARM_BIG_ENDIAN
+	vmov	d0, r3, r2		/* d0 := x lo */
+#else
 	vmov	d0, r2, r3		/* d0 := x lo */
+#endif
 	vldr	d1, [sp]		/* d1 := x hi */
 	ldr	r1, [sp, #8]		/* r1 := nrounds */
 #endif
@@ -489,7 +502,7 @@ ENTRY(aes_neon_dec1)
 	ldr	r12, .Lconstants_addr
 	adr	r11, .Lconstants_addr
 
-	vld1.64	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
+	vld1.8	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
 	rsb	r3, r1, #0		/* r3 := ~(x - 1) = -x */
 	vmov.i8	q1, #0x0f
 	and	r3, r3, #3		/* r3 := 3 & ~(x - 1) */
@@ -500,8 +513,8 @@ ENTRY(aes_neon_dec1)
 	/* (q4, q5) := (diptlo, dipthi) */
 	add	r6, r12, #(diptlo - .Lconstants)
 	add	r7, r12, #(dipthi - .Lconstants)
-	vld1.64	{d8-d9}, [r6 :128]
-	vld1.64	{d10-d11}, [r7 :128]
+	vld1.8	{d8-d9}, [r6 :128]
+	vld1.8	{d10-d11}, [r7 :128]
 
 	/* load the rest of the constants */
 	add	r4, r12, #(dsbb_0 - .Lconstants)
@@ -509,11 +522,11 @@ ENTRY(aes_neon_dec1)
 	add	r6, r12, #(inv - .Lconstants)
 	add	r7, r12, #(inva - .Lconstants)
 	add	r8, r12, #(.Lmc_forward_3 - .Lconstants)
-	vld1.64	{d12-d13}, [r4 :128]	/* q6 := dsbb[0] */
-	vld1.64	{d14-d15}, [r5 :128]	/* q7 := dsbb[1] */
-	vld1.64	{d20-d21}, [r6 :128]	/* q10 := inv */
-	vld1.64	{d22-d23}, [r7 :128]	/* q11 := inva */
-	vld1.64	{d30-d31}, [r8 :128]	/* q15 := mc_forward[3] */
+	vld1.8	{d12-d13}, [r4 :128]	/* q6 := dsbb[0] */
+	vld1.8	{d14-d15}, [r5 :128]	/* q7 := dsbb[1] */
+	vld1.8	{d20-d21}, [r6 :128]	/* q10 := inv */
+	vld1.8	{d22-d23}, [r7 :128]	/* q11 := inva */
+	vld1.8	{d30-d31}, [r8 :128]	/* q15 := mc_forward[3] */
 
 	/* (q2, q3) := (lo, hi) */
 	vshr.u8	q3, q0, #4
@@ -529,8 +542,8 @@ ENTRY(aes_neon_dec1)
 	/* load dsb9 */
 	add	r4, r12, #(dsb9_0 - .Lconstants)
 	add	r5, r12, #(dsb9_1 - .Lconstants)
-	vld1.64	{d8-d9}, [r4 :128]	/* q4 := dsb9[0] */
-	vld1.64	{d10-d11}, [r5 :128]	/* q5 := dsb9[1] */
+	vld1.8	{d8-d9}, [r4 :128]	/* q4 := dsb9[0] */
+	vld1.8	{d10-d11}, [r5 :128]	/* q5 := dsb9[1] */
 
 	/* q0 := rk[0] + diptlo(lo) + dipthi(hi) */
 	veor	q0, q14, q2
@@ -541,10 +554,10 @@ ENTRY(aes_neon_dec1)
 	_ALIGN_TEXT
 1:	/* load dsbd */
 	add	r4, r12, #(dsbd_0 - .Lconstants)
-	vld1.64	{d16-d17}, [r4 :128]!	/* q8 := dsbd[0] */
-	vld1.64	{d18-d19}, [r4 :128]	/* q9 := dsbd[1] */
+	vld1.8	{d16-d17}, [r4 :128]!	/* q8 := dsbd[0] */
+	vld1.8	{d18-d19}, [r4 :128]	/* q9 := dsbd[1] */
 
-	vld1.64	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
+	vld1.8	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
 
 	/* q0 := rk[i] + dsb9_0(io) + dsb9_1(jo) */
 	vtbl.8	d24, {d8-d9}, d4
@@ -568,8 +581,8 @@ ENTRY(aes_neon_dec1)
 
 	/* load dsbe */
 	add	r4, r12, #(dsbe_0 - .Lconstants)
-	vld1.64	{d16-d17}, [r4 :128]!	/* q8 := dsbe[0] */
-	vld1.64	{d18-d19}, [r4 :128]	/* q9 := dsbe[1] */
+	vld1.8	{d16-d17}, [r4 :128]!	/* q8 := dsbe[0] */
+	vld1.8	{d18-d19}, [r4 :128]	/* q9 := dsbe[1] */
 
 	/* q0 := x(mc) + dsbb_0(io) + dsbb_1(jo) */
 	vtbl.8	d28, {d0-d1}, d30
@@ -647,11 +660,11 @@ ENTRY(aes_neon_dec1)
 	add	r6, r12, #(dsbo_0 - .Lconstants)
 	add	r7, r12, #(dsbo_1 - .Lconstants)
 	add	r8, r8, r3, lsl #4
-	vld1.64	{d12-d13}, [r6 :128]
-	vld1.64	{d14-d15}, [r7 :128]
-	vld1.64	{d30-d31}, [r8 :128]
+	vld1.8	{d12-d13}, [r6 :128]
+	vld1.8	{d14-d15}, [r7 :128]
+	vld1.8	{d30-d31}, [r8 :128]
 
-	vld1.64	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
+	vld1.8	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
 
 	/* (q2, q3) := (dsbo_0(io), dsbo_1(jo)) */
 	vtbl.8	d4, {d12-d13}, d4
@@ -669,9 +682,14 @@ ENTRY(aes_neon_dec1)
 
 	vpop	{d8-d15}
 	pop	{r4, r5, r6, r7, r8, r10, r11, lr}
-#ifdef _KERNEL
+#ifdef __SOFTFP__
+#ifdef __ARM_BIG_ENDIAN
+	vmov	r1, r0, d0
+	vmov	r3, r2, d1
+#else
 	vmov	r0, r1, d0
 	vmov	r2, r3, d1
+#endif
 #endif
 	bx	lr
 END(aes_neon_dec1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.31 2020/08/03 20:26:09 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.35 2020/08/13 04:12:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.31 2020/08/03 20:26:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.35 2020/08/13 04:12:13 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.31 2020/08/03 20:26:09 rillig Exp $");
+__RCSID("$NetBSD: buf.c,v 1.35 2020/08/13 04:12:13 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -104,10 +104,10 @@ Buf_Expand_1(Buffer *bp)
 
 /* Add the given bytes to the buffer. */
 void
-Buf_AddBytesZ(Buffer *bp, const Byte *bytesPtr, size_t numBytes)
+Buf_AddBytes(Buffer *bp, const char *bytesPtr, size_t numBytes)
 {
     size_t count = bp->count;
-    Byte *ptr;
+    char *ptr;
 
     if (__predict_false(count + numBytes >= bp->size)) {
 	bp->size += max(bp->size, numBytes + 16);
@@ -124,14 +124,14 @@ Buf_AddBytesZ(Buffer *bp, const Byte *bytesPtr, size_t numBytes)
 void
 Buf_AddBytesBetween(Buffer *bp, const char *start, const char *end)
 {
-    Buf_AddBytesZ(bp, start, (size_t)(end - start));
+    Buf_AddBytes(bp, start, (size_t)(end - start));
 }
 
 /* Add the given string to the buffer. */
 void
 Buf_AddStr(Buffer *bp, const char *str)
 {
-    Buf_AddBytesZ(bp, str, strlen(str));
+    Buf_AddBytes(bp, str, strlen(str));
 }
 
 /* Add the given number to the buffer. */
@@ -143,11 +143,14 @@ Buf_AddInt(Buffer *bp, int n)
      * We calculate the space needed for the octal representation, and
      * add enough slop to cope with a '-' sign and a trailing '\0'.
      */
-    size_t bits = sizeof(int) * CHAR_BIT;
-    char buf[1 + (bits + 2) / 3 + 1];
+    enum {
+	bits = sizeof(int) * CHAR_BIT,
+	buf_size = 1 + (bits + 2) / 3 + 1
+    };
+    char buf[buf_size];
 
     size_t len = (size_t)snprintf(buf, sizeof buf, "%d", n);
-    Buf_AddBytesZ(bp, buf, len);
+    Buf_AddBytes(bp, buf, len);
 }
 
 /* Get the data (usually a string) from the buffer.
@@ -156,8 +159,8 @@ Buf_AddInt(Buffer *bp, int n)
  *
  * Returns the pointer to the data and optionally the length of the
  * data in the buffer. */
-Byte *
-Buf_GetAllZ(Buffer *bp, size_t *numBytesPtr)
+char *
+Buf_GetAll(Buffer *bp, size_t *numBytesPtr)
 {
     if (numBytesPtr != NULL)
 	*numBytesPtr = bp->count;
@@ -175,7 +178,7 @@ Buf_Empty(Buffer *bp)
 /* Initialize a buffer.
  * If the given initial size is 0, a reasonable default is used. */
 void
-Buf_InitZ(Buffer *bp, size_t size)
+Buf_Init(Buffer *bp, size_t size)
 {
     if (size <= 0) {
 	size = BUF_DEF_SIZE;
@@ -189,10 +192,10 @@ Buf_InitZ(Buffer *bp, size_t size)
 /* Reset the buffer.
  * If freeData is TRUE, the data from the buffer is freed as well.
  * Otherwise it is kept and returned. */
-Byte *
+char *
 Buf_Destroy(Buffer *buf, Boolean freeData)
 {
-    Byte *data = buf->buffer;
+    char *data = buf->buffer;
     if (freeData) {
 	free(data);
 	data = NULL;
@@ -206,20 +209,20 @@ Buf_Destroy(Buffer *buf, Boolean freeData)
 }
 
 #ifndef BUF_COMPACT_LIMIT
-# define BUF_COMPACT_LIMIT 128          /* worthwhile saving */
+# define BUF_COMPACT_LIMIT 128		/* worthwhile saving */
 #endif
 
 /* Reset the buffer and return its data.
  *
  * If the buffer size is much greater than its content,
  * a new buffer will be allocated and the old one freed. */
-Byte *
+char *
 Buf_DestroyCompact(Buffer *buf)
 {
 #if BUF_COMPACT_LIMIT > 0
     if (buf->size - buf->count >= BUF_COMPACT_LIMIT) {
 	/* We trust realloc to be smart */
-	Byte *data = bmake_realloc(buf->buffer, buf->count + 1);
+	char *data = bmake_realloc(buf->buffer, buf->count + 1);
 	data[buf->count] = 0;
 	Buf_Destroy(buf, FALSE);
 	return data;
