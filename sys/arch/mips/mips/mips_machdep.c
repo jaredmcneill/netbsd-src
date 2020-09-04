@@ -773,7 +773,7 @@ mips3_vector_init(const struct splsw *splsw)
 		panic("startup: %s vector code too large",
 		    "General exception");
 
-#if !defined(MIPS_5900)
+#if !defined(MIPS3_5900)
 	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips3_tlb_miss,
 	      mips3_exception_end - mips3_tlb_miss);
 #else
