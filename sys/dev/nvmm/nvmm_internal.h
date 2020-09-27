@@ -133,6 +133,8 @@ struct nvmm_impl {
 #if defined(__x86_64__)
 extern const struct nvmm_impl nvmm_x86_svm;
 extern const struct nvmm_impl nvmm_x86_vmx;
+#elif defined(__aarch64__)
+extern const struct nvmm_impl nvmm_aarch64;
 #endif
 
 static inline bool

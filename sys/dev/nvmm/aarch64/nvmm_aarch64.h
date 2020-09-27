@@ -36,7 +36,19 @@ struct nvmm_cap_md {
 	uint64_t vcpu_conf_support;
 };
 
+#define	NVMM_VCPU_EXIT_NONE	0ULL
+#define	NVMM_VCPU_EXIT_MEMORY	1ULL
+
+struct nvmm_aarch64_exit_memory {
+	int prot;
+	gpaddr_t gpa;
+};
+
 struct nvmm_aarch64_exit {
+	uint64_t reason;
+	union {
+		struct nvmm_aarch64_exit_memory mem;
+	} u;
 };
 #define	nvmm_vcpu_exit	nvmm_aarch64_exit
 
