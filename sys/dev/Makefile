@@ -5,11 +5,11 @@ SUBDIR=	apm ata bluetooth dec dm dmover dtv hdaudio hdmicec hid hpc \
 	microcode ofw pci pckbport pcmcia pud putter raidframe sbus scsipi \
 	spi sun tc usb vme wscons
 
-.if ${MACHINE_ARCH} == "x86_64"
+.include <bsd.own.mk>
+
+.if ${HAVE_NVMM:Uno} == "yes"
 SUBDIR+= nvmm
 .endif
-
-.include <bsd.own.mk>
 
 .if ${MKISCSI} != "no"
 SUBDIR+= iscsi
